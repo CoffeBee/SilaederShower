@@ -1,0 +1,70 @@
+
+.body {
+  width: 100%;
+  height: 100%;
+  background: #e9e8ed;
+}
+
+
+.wrapper{
+  position: absolute;
+  width: 464px;
+  height: 496px;
+  background: white;
+  border-radius: 40px;
+  left: 50%; 
+  top: 50%;
+  margin-left: max(-232px, -50vw);
+  margin-top: max(-248px, -50vh);
+}
+.logo{
+  width: 250px;
+  padding-top: 30px;
+  padding-left: 30px;
+  display: block;
+  margin-right: auto;
+}
+.field{
+  width: 408px;
+  height: 73px;
+  margin-top: 40px;
+  border-radius: 25px;
+  font-size: 'Poppins', sans-serif;
+  font-weight: Normal;
+  font-size: 20px;
+  text-indent: 20px;
+  border: 2px solid lightgray;
+}
+
+.login{
+  width: 134px;
+  background: #AB54DB;
+  display: block;
+  margin-right: auto;
+  margin-left: calc((464px - 408px - 8px) / 2);
+  border: 2px solid lightgray;
+  text-indent: 0px;
+  font-size: 24px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: bold;
+  color: white;
+
+}
+
+
+.password{
+  position: relative;
+}
+.password-control {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background: url(/view.svg) 0 0 no-repeat;
+  position: absolute;
+  margin-top: calc(40px - 20px / 2 + 73px / 2 + 2px); /* Margin - img_height/2 + field_height/2 + field_border */
+  margin-left: calc((464px - 408px - 8px )/ -2 - 15px);
+  background: url(https://snipp.ru/demo/495/no-view.svg) 0 0 no-repeat;
+}
+.view {
+    background: url(https://snipp.ru/demo/495/view.svg) 0 0 no-repeat;
+}
