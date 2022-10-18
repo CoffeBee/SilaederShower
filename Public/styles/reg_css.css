@@ -1,15 +1,26 @@
-
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 .body {
   width: 100%;
   height: 100%;
   background: #e9e8ed;
 }
 
+.error {
+    border: solid 1px #FF5B5B;
+}
 
+.error_text {
+    font-family: 'Poppins', sans-serif;
+    font-weight: bold;
+    font-size: 14px;
+    margin: 0;
+    margin-top: 20px;
+    margin-bottom: -20px;
+    color: #FF5B5B;
+}
 .wrapper{
+    padding: 40px;
   position: absolute;
-  width: 464px;
-  height: 496px;
   background: white;
   border-radius: 40px;
   left: 50%; 
@@ -19,36 +30,34 @@
 }
 .logo{
   width: 250px;
-  padding-top: 30px;
-  padding-left: 30px;
   display: block;
   margin-right: auto;
 }
 .field{
-  width: 408px;
-  height: 73px;
-  margin-top: 40px;
+  width: 360px;
+  margin-top: 30px;
   border-radius: 25px;
-  font-size: 'Poppins', sans-serif;
+  padding: 24px;
+  font-family: 'Poppins', sans-serif;
   font-weight: Normal;
-  font-size: 20px;
-  text-indent: 20px;
+  font-size: 14px;
   border: 2px solid lightgray;
 }
 
 .login{
-  width: 134px;
+    margin-top: 30px;
+    margin-left: 0px;
+    margin-right: auto;
+    padding: 15px 40px;
   background: #AB54DB;
   display: block;
-  margin-right: auto;
-  margin-left: calc((464px - 408px - 8px) / 2);
-  border: 2px solid lightgray;
+  border-radius: 18px;
   text-indent: 0px;
-  font-size: 24px;
+  font-size: 16px;
   font-family: 'Poppins', sans-serif;
   font-weight: bold;
   color: white;
-
+  border: none;
 }
 
 
