@@ -6,7 +6,7 @@ import Vapor
 // configures your application
 public func configure(_ app: Application) throws {
     // uncomment to serve files from /Public folder
-    // app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
+    app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
 
     app.databases.use(.postgres(
         hostname: Environment.get("DATABASE_HOST") ?? "localhost",
@@ -18,7 +18,8 @@ public func configure(_ app: Application) throws {
 
 
     app.views.use(.leaf)
-
+    app.migrations.add(CreateUser())
+    app.commands.use(AddUserCommand(), as: "add_user")
     
 
     // register routes

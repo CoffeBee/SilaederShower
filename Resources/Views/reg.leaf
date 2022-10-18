@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link rel="stylesheet" href="/styles/reg_css.css">
+		<script src="/scripts.js"></script>
+	</head>
+	<body class="body">
+        #if(error == false):
+            <div class="wrapper" align="center">
+        #else:
+            <div class="wrapper error" align="center">
+        #endif
+			<img src="/images/logo.svg" class="logo"/>
+			<form id="login" method="POST" action="?">
+				<input class="field" type="text" placeholder="Email or username"/ name="login">
+				<div class="password">
+					<input class="field" type="password" oninput="become_visible();" id="password-input" placeholder="Password"/ name="password">
+					<a href="#" class="password-control view" id="eye" style="visibility: hidden;" onclick="return show_hide_password(this);"></a>
+				</div>
+			</form>
+			<div class="submit">
+				<button type="submit" form="login" class="login">Login</button>
+			</div>
+            #if(error == true):
+                <p class="error_text">Password or login is incorrect</p>
+            #endif
+		</div>
+	</body>
+</html>
