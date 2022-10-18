@@ -19,8 +19,8 @@ public func configure(_ app: Application) throws {
 
     app.views.use(.leaf)
     app.migrations.add(CreateUser())
+    app.migrations.add(CreateConference())
     app.commands.use(AddUserCommand(), as: "add_user")
-    
 
     // register routes
     try routes(app)
