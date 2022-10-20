@@ -15,12 +15,21 @@ struct CreateSection: Migration {
             .field("name", .string, .required)
             .field("next_id", .uuid, .references(Section.schema, "id"))
             .field("conference_id", .uuid, .required, .references(Conference.schema, "id"))
-            .create()
+            .create().flatMap {
+                database.schema(Conference.schema)
+                    .field("first_id", .uuid, .references(Section.schema, "id"))
+                    .update()
+            }
             
     }
 
     func revert(on database: Database) -> EventLoopFuture<Void> {
-        return database.schema(Section.schema).delete()
+        return database.schema(Conference.schema)
+            .deleteField("first_id")
+            .update()
+            .flatMap {
+                database.schema(Section.schema).delete()
+        }
     }
 }
 
