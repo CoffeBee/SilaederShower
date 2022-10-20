@@ -52,20 +52,21 @@ body{
 	width: 252px;
 	font-family: Raleway;
 	font-weight: 500;
+    
 	letter-spacing: 0.4px;
 	color: #464255;
 	font-size: 16px;
 	position: relative;
 	margin-bottom: 12px;
 	padding: 16px 24px;
-	background: #eef3fa;
+	background: rgba(183, 219, 249, 0.15);
 	border-radius: 10px;
 	border: none;
 	display: block;
 }
 
 .choosen{
-	background: #e0f2fb;
+	background: rgba(88, 205, 255, 0.15);
 }
 
 .logo{
@@ -88,7 +89,7 @@ body{
 }
 
 
-#main{
+#app{
 	margin-left: calc(184px + 69px); /*width_sidebar + margin*/
 	transition: margin-left 1s;
 	margin-top: 36px;
