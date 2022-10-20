@@ -32,7 +32,7 @@ struct UserController: RouteCollection {
         return User.query(on: req.db).filter(\.$username == authForm.login).first().flatMapThrowing { userOptional in
             if let user = userOptional {
                 if try Bcrypt.verify(authForm.password, created: user.passwordHash) {
-                    throw Abort.redirect(to: "/")
+                    throw Abort.redirect(to: "/cf")
                 }
                 return req.view.render("reg", ["error": true])
             }
