@@ -22,6 +22,7 @@ public func configure(_ app: Application) throws {
     app.migrations.add(CreateConference())
     app.migrations.add(TimestampConference())
     app.migrations.add(CreateSection())
+    app.migrations.add(CreateProject())
     app.commands.use(AddUserCommand(), as: "add_user")
 
     // register routes

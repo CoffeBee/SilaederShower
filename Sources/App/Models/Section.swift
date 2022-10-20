@@ -7,10 +7,11 @@
 
 import Fluent
 import Vapor
+import Foundation
 
 final class Section: Model {
     
-    struct Public {
+    struct Public: Content {
         let id: UUID
         let name: String
     }
@@ -29,6 +30,9 @@ final class Section: Model {
     @Parent(key: "conference_id")
     var conference: Conference
     
+    @OptionalParent(key: "first_id")
+    var firstProject: Project?
+    
     init() {}
     
     init(id: UUID? = nil, conferenceID: Conference.IDValue) throws {
@@ -37,4 +41,30 @@ final class Section: Model {
         self.$conference.id = conferenceID
     }
     
+}
+
+final class Project: Model {
+    
+    struct Public: Content {
+        let id: UUID
+        let name: String
+    }
+    
+    static let schema = "projects"
+    
+    @ID(custom: "id", generatedBy: .user)
+    var id: Int?
+    
+    @OptionalParent(key: "next_id")
+    var nextProject: Project?
+    
+    @Parent(key: "section_id")
+    var section: Section
+    
+    init() {}
+    
+    init(id: Int? = nil, sectionID: Section.IDValue) throws {
+        self.id = id
+        self.$section.id = sectionID
+    }
 }
