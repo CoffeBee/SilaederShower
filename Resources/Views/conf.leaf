@@ -63,6 +63,34 @@
          <img src="/images/start.svg" style="margin-left: 35px; height: 80px; width: 80px;">
          <img src="/images/peoples.svg" style="margin-left: 35px; height: 80px; height: 80px">
       </div>
+
+      <div id="plan">
+         <div class="section" v-for="(section, index) in sections">
+            <div style="height: 60px; margin-bottom: 20px"> 
+               <div style="display: flex; justify-content: space-between;" v-if="index == sections.length - 1">
+                  <span style="font-family: Raleway; font-weight: 500; font-size: 21px;border: none;
+               outline: none; display: block;
+               border-radius: 0; color: #464255;
+            margin-bottom: 0px;;width: auto; background: transparent" @blur="sendName(index, $event)" contenteditable>{{section.name}}</span>
+                  <img src="/images/add.svg" @click="sectionAdd"/>
+               </div>
+               <span v-if="index != sections.length - 1" style="font-family: Raleway; font-weight: 500; font-size: 21px;border: none;
+               outline: none; display: block;
+               border-radius: 0; color:  #464255;
+            margin-bottom: 0px;;width: auto; background: transparent" @blur="sendName(index, $event)" contenteditable>{{section.name}}</span>
+            </div>
+            <div class="projects">
+               <div style="width: 300px; height: 150px; background: #ECEAF3; border-radius: 25px;padding: 15px;" @mouseover="section.hover = true" @mouseleave="section.hover = false; search = null" >
+                  <Transition>
+                     <input v-model="search" @keyup="searchProject" class="new-project" placeholder="Новый проект"  v-if="section.hover"/>
+                     <div v-if="results.length != 0 && section.hover == true" style="padding: 15px 25px; border-radius: 25px;">
+                        <p v-for="(res, res_i) in results" style="margin: 0; font-family: 'Raleway'; font-size: 12; font-weight: 400; color: #464255" >{{res}}</p>
+                     </div>
+                  </Transition>
+               </div>
+            </div>
+         </div>
+      </div>
    </div>
    <script>
    openNav();
@@ -76,9 +104,23 @@ createApp({
       return {
          title: '#(title)',
          detail: '#(detail)',
-         confID: '#(confID)'
+         confID: '#(confID)',
+         sections: [],
+         search: null,
+         results: []
       }
    },
+   mounted() {
+    axios({
+        method: 'get',
+        url: '/cf/section/' + this.confID
+      }).then((response) => {
+       this.sections = response.data
+     })
+     .catch(function (error) {
+       console.log(error);
+     });
+  },
    methods: {
     sendTitle(e) {
       this.title = e.target.innerHTML;
@@ -110,6 +152,37 @@ createApp({
        console.log(error);
      });
     },
+    sectionAdd(e) {
+      axios({
+        method: 'post',
+        url: '/cf/section/' + this.confID
+      }).then( (response) => {
+       this.sections.push(response.data)
+     })
+     .catch(function (error) {
+       console.log(error);
+     });
+    },
+    sendName(sec_index, e) {
+      this.sections[sec_index].name = e.target.innerHTML;
+      axios({
+        method: 'post',
+        url: '/cf/sc/name/' + this.sections[sec_index].id,
+        data: {
+          name: this.sections[sec_index].name,
+        }
+      }).then(function (response) {
+       console.log(response);
+     })
+     .catch(function (error) {
+       console.log(error);
+     });
+    },
+    searchProject() {
+      if (this.search.length > 3) {
+         this.results = ["ABOBA", "BOBO", "COCO"]
+      }
+    }
   }
 }).mount('#app')
 </script>
