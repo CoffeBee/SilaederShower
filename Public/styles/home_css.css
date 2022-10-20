@@ -1,0 +1,152 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap');
+
+
+body{
+	background: #f3f2f7;
+	margin: 0px;
+}
+
+.slidebar{
+	display: flex;
+	position: fixed;
+	width: 165px;
+	top: 0px;
+	left: 0;
+	margin-top: 22px;
+  	margin-left: 19px;
+  	height: calc(100vh - 34px);
+  	/*margin-bottom:  34px;*/
+  	background: #f7f7fa;
+  	border-radius: 10px;
+  	transition: 1s;
+  	border: 2px solid white;
+  	overflow: hidden;
+  	/*border: 1px;*/
+  	/*margin-left: 10px;*/
+
+
+}
+
+.plus{
+	height: 19px;
+	width: 19px;
+}
+
+
+.sidebar-info{
+	width: 245px;
+	height: 85px;
+	position: absolute;
+	/*display: inline-block;*/
+	/*margin-left: 19px;*/
+	bottom: 30px;
+	
+	/*left: 0;*/
+	text-align: center;
+	/*background: greenyellow;*/
+
+}
+
+.sidebar-conferences{
+	width: 252px;
+	font-family: Raleway;
+	font-weight: 500;
+    
+	letter-spacing: 0.4px;
+	color: #464255;
+	font-size: 16px;
+	position: relative;
+	margin-bottom: 12px;
+	padding: 16px 24px;
+	background: rgba(183, 219, 249, 0.15);
+	border-radius: 10px;
+	border: none;
+	display: block;
+}
+
+.choosen{
+	background: rgba(88, 205, 255, 0.15);
+}
+
+.logo{
+	margin-bottom: 35px;
+	position: relative;
+
+}
+
+.sidebar-content{
+	text-align: center;
+	float: right;
+	display: flex;
+	flex-direction: column;
+	/*overflow: auto;*/
+	/*margin: auto;*/
+	/*display: block;*/
+	overflow: scroll;
+	position:relative;
+	height: calc(100% - 290px);
+}
+
+
+#app{
+	margin-left: calc(351px + 69px); /*width_sidebar + margin*/
+	transition: margin-left 1s;
+	margin-top: 36px;
+}
+
+.header{
+	/*height: 80px;*/
+	/*width: 601px;*/
+	display: flex;
+	/*background: lightcoral;*/
+}
+
+#plan {
+	margin-top: 30px;
+	display: flex;
+	gap: 40px;
+	width: calc(100vw - 351px - 69px - 30px);
+	overflow: scroll;
+}
+
+
+.section {
+	min-width: 300px;
+	max-width: 300px;
+	margin-bottom: 15px;	
+	
+}
+
+.projects {
+	
+}
+
+.new-project {
+	border-radius: 18px;
+  width: 210px;
+  padding: 12px 25px;
+  font-family: 'Raleway', sans-serif;
+  font-weight: Normal;
+  font-size: 14px;
+  color:  #A3A3A3;
+  border: none;
+               outline: none; 
+}
+
+.v-enter-active,
+.v-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+  opacity: 0;
+}
+
+.project {
+	padding: 15px 25px;
+	background: #FFF;
+	border-radius: 25px;
+}
+

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <link rel="stylesheet" href="/styles/home_css.css">
+      <script src="/home_scripts.js"></script>
+      <meta charset="UTF-8">
+      <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+      <script   src="https://code.jquery.com/jquery-3.6.1.min.js"   integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="   crossorigin="anonymous"></script>
+      <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+   </head>
+   <body>
+      
+      <div id="slidebar" class="slidebar" onmouseover="openNav();" onmouseout="closeNav();">
+         <div id="contentInNav" style="height: calc(100% - 60px); visibility: hidden; transition: visibility 100ms;">
+            <img src="/images/logo.svg" class="logo">
+            <div class="sidebar-content">
+               
+               #for(conf in confs):
+               <button class="sidebar-conferences #if(conf.selected):
+               choosen
+               #endif" onclick="location.href='/cf/#(conf.id)'">#(conf.title)</button>
+               #endfor
+               
+            </div>
+            <form action="/cf/add" method="post" style="position: absolute; bottom: 120px">
+               <button class="sidebar-conferences "  onclick="" id="button-plus">
+               <img src="/images/plus.svg" class="plus">
+               </button>
+            </form>
+            <div class="sidebar-info">
+               <div style="font-family: Raleway; font-weight: 600; color: #464255; font-size: 15px; margin-bottom: 16px;">
+                  Silaeder shower system<br>
+               </div>
+               <div style="font-family: Raleway; font-weight: Normal; color: #a3a3a3; font-size: 13px;">
+                  <div style="margin-bottom: 16px;">
+                     © 2022 All Rights Reserved<br>
+                  </div>
+                  Made with ❤️ in Silaeder
+               </div>
+            </div>
+         </div>
+         <div id="logoInNav" style="height: calc(100% - 60px); visibility: visible; transition: visibility 100ms;">
+            <img src="/images/logo_simple.svg" style="position: absolute; left: 43px; top: 30px">
+         </div>
+      </div>
+   </div>
+   <div id="app" >
+      
+      <div class="header">
+         <span class="Info">
+            
+            <span style="font-family: Raleway; font-weight: 600; font-size: 32px;border: none;
+               outline: none; display: block;
+               border-radius: 0;
+            margin-bottom: 0px; margin-top: 0px;width: auto; background: transparent" @blur="sendTitle" contenteditable>{{title}}</span>
+            
+            <span style="font-family: Raleway; font-weight: 400; font-size: 14px;border: none;
+               outline: none; display: block; margin-top: 16px;
+               border-radius: 0;
+            margin-bottom: 0px;;width: auto; background: transparent" @blur="sendDetail" contenteditable>{{detail}}</span>
+         </span>
+         <img src="/images/start.svg" style="margin-left: 35px; height: 80px; width: 80px;">
+         <img src="/images/peoples.svg" style="margin-left: 35px; height: 80px; height: 80px">
+      </div>
+
+      <div id="plan">
+         <img src="/images/add.svg" v-if="sections.length === 0" @click="sectionAdd"/>
+         <div class="section" v-for="(section, index) in sections">
+            <div style="height: 60px; margin-bottom: 20px"> 
+               <div style="display: flex; justify-content: space-between;" v-if="index == sections.length - 1">
+                  <span style="font-family: Raleway; font-weight: 500; font-size: 21px;border: none;
+               outline: none; display: block;
+               border-radius: 0; color: #464255;
+            margin-bottom: 0px;;width: auto; background: transparent" @blur="sendName(index, $event)" contenteditable>{{section.name}}</span>
+                  <img src="/images/add.svg" @click="sectionAdd"/>
+               </div>
+               <span v-if="index != sections.length - 1" style="font-family: Raleway; font-weight: 500; font-size: 21px;border: none;
+               outline: none; display: block;
+               border-radius: 0; color:  #464255;
+            margin-bottom: 0px;;width: auto; background: transparent" @blur="sendName(index, $event)" contenteditable>{{section.name}}</span>
+            </div>
+            <div class="projects">
+               <div style="max-height: calc(100vh - 226px - 200px);position: relative;overflow-y: scroll;display: flex;
+   flex-direction: column;
+   margin-bottom: 20px;">
+                  <div class="project" style="margin-bottom: 30px;" v-for="(project, pr_id) in section.projects">
+                        <div style="position: relative;">
+                           <p style="margin: 0; margin-left: -5px; display: inline-block; border-radius: 15px; padding: 8px 16px; background: rgba(255, 187, 84, 0.15);font-family: 'Raleway';font-style: normal;font-weight: 500;font-size: 16px;letter-spacing: 0.4px;color: #FFBB54;">{{project.data.presentation.teacher}}</p>
+                        <p style="margin: 0; margin-top:  15px; font-family: 'Raleway'; font-weight: 500; font-size: 18px; color: #464255">{{project.data.name}}</p>
+                        <p style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE">est 10:00-10:05 </p>
+                        <img @click="removeProject(project.id, index, pr_id)" src="/images/del.svg" style="position: absolute; top: 5px; right: 0px;" />
+                        </div>
+                     </div>
+               </div>
+               <div style="width: 270px; height: 120px; background: #ECEAF3; border-radius: 25px;padding: 15px;" @mouseover="section.hover = true" @mouseleave="section.hover = false;" >
+
+                     <div >
+                        <Transition>
+                        <input v-if="section.hover == true" v-model="section.search" @keyup="searchProject(index)" class="new-project" placeholder="Новый проект"  />
+                        </Transition>
+                        <Transition>
+                        <div v-if="section.hover == true && section.results.length > 0" style="padding: 12px 25px; width: 210px;; border-radius: 25px; margin-top: 15px; background: #FFF;">
+                           <p v-for="(res, res_i) in section.results" style="margin: 0; font-family: 'Raleway'; font-size: 12; font-weight: 400; color: #464255" @click="addProject(index, res.id, $event)">{{res.name}}</p>
+                        </div>
+                        </Transition>
+                     </div>
+                  
+               </div>
+            </div>
+         </div>
+      </div>
+   </div>
+   <script>
+   openNav();
+   </script>
+</body>
+<script>
+
+const {createApp} = Vue
+createApp({
+   data() {
+      return {
+         title: '#(title)',
+         detail: '#(detail)',
+         confID: '#(confID)',
+         sections: [],
+      }
+   },
+   mounted() {
+    axios({
+        method: 'get',
+        url: '/cf/section/' + this.confID
+      }).then((response) => {
+       this.sections = response.data
+       this.sections.forEach( (section, sec_i) => {
+         this.sections[sec_i].projects.forEach( (proj, proj_i) => {
+
+            axios({
+                 method: 'get',
+                 url: 'http://api.conference.silaeder.ru/project/' + this.sections[sec_i].projects[proj_i].frgnID,
+               }).then( (response) => {
+                this.sections[sec_i].projects[proj_i].data = response.data
+              })
+              .catch(function (error) {
+                console.log(error);
+              });
+         } )
+      });
+     })
+     .catch(function (error) {
+       console.log(error);
+     });
+  },
+   methods: {
+    sendTitle(e) {
+      this.title = e.target.innerHTML;
+      axios({
+        method: 'post',
+        url: '/cf/title/' + this.confID,
+        data: {
+          title: this.title,
+        }
+      }).then(function (response) {
+       console.log(response);
+     })
+     .catch(function (error) {
+       console.log(error);
+     });
+    },
+    sendDetail(e) {
+      this.detail = e.target.innerHTML;
+      axios({
+        method: 'post',
+        url: '/cf/detail/' + this.confID,
+        data: {
+          detail: this.detail,
+        }
+      }).then(function (response) {
+       console.log(response);
+     })
+     .catch(function (error) {
+       console.log(error);
+     });
+    },
+    sectionAdd(e) {
+      axios({
+        method: 'post',
+        url: '/cf/section/' + this.confID
+      }).then( (response) => {
+       this.sections.push(response.data)
+     })
+     .catch(function (error) {
+       console.log(error);
+     });
+    },
+    sendName(sec_index, e) {
+      this.sections[sec_index].name = e.target.innerHTML;
+      axios({
+        method: 'post',
+        url: '/cf/sc/name/' + this.sections[sec_index].id,
+        data: {
+          name: this.sections[sec_index].name,
+        }
+      }).then(function (response) {
+       console.log(response);
+     })
+     .catch(function (error) {
+       console.log(error);
+     });
+    },
+    searchProject(index) {
+      axios({
+        method: 'get',
+        url: 'http://api.conference.silaeder.ru/project?q=' + this.sections[index].search,
+      }).then( (response) => {
+       this.sections[index].results = response.data
+     })
+     .catch(function (error) {
+       console.log(error);
+     });
+    },
+    addProject(sec_index, proj_id, e) {
+      axios({
+        method: 'post',
+        url: '/cf/sc/project/' + this.sections[sec_index].id,
+        data: {
+          id: proj_id,
+        }
+      }).then((response) => {
+         var new_proj = response.data
+       axios({
+                 method: 'get',
+                 url: 'http://api.conference.silaeder.ru/project/' + new_proj.frgnID,
+               }).then( (responsee) => {
+                  new_proj.data = responsee.data
+                this.sections[sec_index].projects.push(new_proj) 
+              })
+              .catch(function (error) {
+                console.log(error);
+              });
+     })
+     .catch(function (error) {
+       console.log(error);
+     });
+    },
+    removeProject(pr_id, sec_i, pr_i) {
+      this.sections[sec_i].projects.splice(pr_i, 1);
+      axios({
+        method: 'post',
+        url: '/cf/pr/del/' + pr_id
+      }).then(function (response) {
+       console.log(response);
+     })
+     .catch(function (error) {
+       console.log(error);
+     });
+    },
+  }
+}).mount('#app')
+</script>
+</html>
