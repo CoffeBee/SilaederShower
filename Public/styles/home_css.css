@@ -115,17 +115,16 @@ body{
 	min-width: 300px;
 	max-width: 300px;
 	margin-bottom: 15px;	
+	
 }
 
 .projects {
-	display: flex;
-	flex-direction: column;
-	gap: 30px;
+	
 }
 
 .new-project {
 	border-radius: 18px;
-  width: 240px;
+  width: 210px;
   padding: 12px 25px;
   font-family: 'Raleway', sans-serif;
   font-weight: Normal;
@@ -143,5 +142,11 @@ body{
 .v-enter-from,
 .v-leave-to {
   opacity: 0;
+}
+
+.project {
+	padding: 15px 25px;
+	background: #FFF;
+	border-radius: 25px;
 }
 

@@ -30,6 +30,10 @@ struct ChangeName: Content {
     let name: String
 }
 
+struct AddProject: Content {
+    let id: Int
+}
+
 struct ConferenceController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         let conferencesRoute = routes.grouped("cf")
@@ -45,6 +49,11 @@ struct ConferenceController: RouteCollection {
         let sectionsRoute = conferencesRoute.grouped("sc")
         
         sectionsRoute.post("name", ":id", use: changeName)
+        sectionsRoute.post("project", ":id", use: addProject)
+        
+        let projectsRoute = conferencesRoute.grouped("pr")
+        projectsRoute.post("del", ":id", use: delProject)
+        
     }
     
     
@@ -70,22 +79,46 @@ struct ConferenceController: RouteCollection {
         }.flatMap { $0 }
     }
     
-    fileprivate func getSectionsPublics(sections: [Section], firstIDOpt: Section.IDValue?) throws -> [Section.Public] {
+    fileprivate func getProjects(projects: [Project], firstIDOpt: Project.IDValue?) throws -> [Project.Public] {
         guard var firstID = firstIDOpt else {
             return []
+        }
+        
+        var projectsIDMap = [Project.IDValue: Project]()
+        for project in projects {
+            try projectsIDMap[project.requireID()] = project
+        }
+        var result = [Project.Public]()
+        while let nextID = projectsIDMap[firstID]?.$nextProject.id {
+            result.append(Project.Public(id: firstID, frgnID: projectsIDMap[firstID]!.frgnID))
+            firstID = nextID
+        }
+        result.append(Project.Public(id: firstID, frgnID: projectsIDMap[firstID]!.frgnID))
+        return result
+    }
+    
+    fileprivate func getSectionsPublics(req: Request, sections: [Section], firstIDOpt: Section.IDValue?) throws -> EventLoopFuture<[Section.Public]> {
+        guard var firstID = firstIDOpt else {
+            return req.eventLoop.makeSucceededFuture([])
         }
         
         var sectionIDMap = [Section.IDValue: Section]()
         for section in sections {
             try sectionIDMap[section.requireID()] = section
         }
-        var result = [Section.Public]()
+        var order = [UUID]()
         while let nextID = sectionIDMap[firstID]?.$nextSection.id {
-            result.append(Section.Public(id: firstID, name: sectionIDMap[firstID]!.name))
+            order.append(firstID)
             firstID = nextID
         }
-        result.append(Section.Public(id: firstID, name: sectionIDMap[firstID]!.name))
-        return result
+        order.append(firstID)
+        var result = [EventLoopFuture<Section.Public>]()
+        for sectionID in order {
+            result.append(Project.query(on: req.db).filter(\.$section.$id == sectionID).all().flatMapThrowing { projects in
+                Section.Public(id: sectionID, name: sectionIDMap[sectionID]!.name, projects: try self.getProjects(projects: projects, firstIDOpt: sectionIDMap[sectionID]!.$firstProject.id))
+            })
+        }
+        return result.flatten(on: req.eventLoop)
     }
     
     fileprivate func viewConf(req: Request) throws -> EventLoopFuture<View> {
@@ -142,7 +175,7 @@ struct ConferenceController: RouteCollection {
             return Section.query(on: req.db).filter(\.$conference.$id == confID).filter(\.$nextSection.$id == nil).first().flatMapThrowing { lastSectionOptional in
                 let newSection = try Section(conferenceID: confID)
                 return newSection.save(on: req.db).flatMapThrowing {
-                    Section.Public(id: try newSection.requireID(), name: newSection.name)
+                    Section.Public(id: try newSection.requireID(), name: newSection.name, projects: [])
                 }.flatMap { sectionPublic in
                     if let lastSection = lastSectionOptional {
                         lastSection.$nextSection.id = sectionPublic.id
@@ -163,8 +196,8 @@ struct ConferenceController: RouteCollection {
         }
         return Conference.find(confID, on: req.db).unwrap(or: Abort(.notFound)).flatMap { conf in
             return Section.query(on: req.db).filter(\.$conference.$id == confID).all().flatMapThrowing { sections in
-                try self.getSectionsPublics(sections: sections, firstIDOpt: conf.$firstSection.id)
-            }
+                try self.getSectionsPublics(req: req, sections: sections, firstIDOpt: conf.$firstSection.id)
+            }.flatMap { $0 }
         }
     }
     
@@ -180,6 +213,49 @@ struct ConferenceController: RouteCollection {
         }
     }
     
+    fileprivate func addProject(req: Request) throws -> EventLoopFuture<Project.Public> {
+        let sectionStr = req.parameters.get("id")!
+        guard let sectionID = UUID(uuidString: sectionStr) else {
+            throw Abort(.badRequest)
+        }
+        let proj_id = try req.content.decode(AddProject.self).id
+        return Section.find(sectionID, on: req.db).unwrap(or: Abort(.notFound)).flatMap { section in
+            return Project.query(on: req.db).filter(\.$section.$id == sectionID).filter(\.$nextProject.$id == nil).first().flatMap { lastProjectOpt in
+                let newProj = Project(frgnID: proj_id, sectionID: sectionID)
+                return newProj.save(on: req.db).flatMapThrowing {
+                    if let last = lastProjectOpt {
+                        try last.$nextProject.id = newProj.requireID()
+                        return last.save(on: req.db).flatMapThrowing { Project.Public(id: try newProj.requireID(), frgnID: proj_id) }
+                    }
+                    try section.$firstProject.id = newProj.requireID()
+                    return section.save(on: req.db).flatMapThrowing { Project.Public(id: try newProj.requireID(), frgnID: proj_id) }
+                }
+            }.flatMap { $0 }
+            
+            
+        }
+    }
+    
+    fileprivate func delProject(req: Request) throws -> EventLoopFuture<HTTPStatus> {
+        let projectStr = req.parameters.get("id")!
+        guard let projectID = UUID(uuidString: projectStr) else {
+            throw Abort(.badRequest)
+        }
+        return Project.find(projectID, on: req.db).unwrap(or: Abort(.notFound)).flatMap { project in
+            return Project.query(on: req.db).filter(\.$nextProject.$id == projectID).first().flatMap { prevOpt in
+                if let prev = prevOpt {
+                    prev.$nextProject.id = project.$nextProject.id
+                    return prev.save(on: req.db)
+                }
+                return Section.find(project.$section.id, on: req.db).unwrap(or: Abort(.internalServerError)).flatMap { section in
+                    section.$firstProject.id = project.$nextProject.id
+                    return section.save(on: req.db)
+                }
+            }.flatMap {
+                project.delete(on: req.db).map { .ok }
+            }
+        }
+    }
     
 }
 

@@ -10,13 +10,14 @@ import Fluent
 struct CreateProject: Migration {
     func prepare(on database: Database) -> EventLoopFuture<Void> {
         return database.schema(Project.schema)
-            .field("id", .int)
+            .field("id", .uuid)
             .unique(on: "id")
+            .field("frgn_id", .int, .required)
             .field("section_id", .uuid, .required, .references(Section.schema, "id"))
-            .field("next_id", .int, .references(Project.schema, "id"))
+            .field("next_id", .uuid, .references(Project.schema, "id"))
             .create().flatMap {
                 database.schema(Section.schema)
-                    .field("first_id", .int, .references(Project.schema, "id"))
+                    .field("first_id", .uuid, .references(Project.schema, "id"))
                     .update()
             }
             

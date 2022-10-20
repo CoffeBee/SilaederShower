@@ -65,6 +65,7 @@
       </div>
 
       <div id="plan">
+         <img src="/images/add.svg" v-if="sections.length === 0" @click="sectionAdd"/>
          <div class="section" v-for="(section, index) in sections">
             <div style="height: 60px; margin-bottom: 20px"> 
                <div style="display: flex; justify-content: space-between;" v-if="index == sections.length - 1">
@@ -80,13 +81,31 @@
             margin-bottom: 0px;;width: auto; background: transparent" @blur="sendName(index, $event)" contenteditable>{{section.name}}</span>
             </div>
             <div class="projects">
-               <div style="width: 300px; height: 150px; background: #ECEAF3; border-radius: 25px;padding: 15px;" @mouseover="section.hover = true" @mouseleave="section.hover = false; search = null" >
-                  <Transition>
-                     <input v-model="search" @keyup="searchProject" class="new-project" placeholder="Новый проект"  v-if="section.hover"/>
-                     <div v-if="results.length != 0 && section.hover == true" style="padding: 15px 25px; border-radius: 25px;">
-                        <p v-for="(res, res_i) in results" style="margin: 0; font-family: 'Raleway'; font-size: 12; font-weight: 400; color: #464255" >{{res}}</p>
+               <div style="max-height: calc(100vh - 226px - 200px);position: relative;overflow-y: scroll;display: flex;
+   flex-direction: column;
+   margin-bottom: 20px;">
+                  <div class="project" style="margin-bottom: 30px;" v-for="(project, pr_id) in section.projects">
+                        <div style="position: relative;">
+                           <p style="margin: 0; margin-left: -5px; display: inline-block; border-radius: 15px; padding: 8px 16px; background: rgba(255, 187, 84, 0.15);font-family: 'Raleway';font-style: normal;font-weight: 500;font-size: 16px;letter-spacing: 0.4px;color: #FFBB54;">{{project.data.presentation.teacher}}</p>
+                        <p style="margin: 0; margin-top:  15px; font-family: 'Raleway'; font-weight: 500; font-size: 18px; color: #464255">{{project.data.name}}</p>
+                        <p style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE">est 10:00-10:05 </p>
+                        <img @click="removeProject(project.id, index, pr_id)" src="/images/del.svg" style="position: absolute; top: 5px; right: 0px;" />
+                        </div>
                      </div>
-                  </Transition>
+               </div>
+               <div style="width: 270px; height: 120px; background: #ECEAF3; border-radius: 25px;padding: 15px;" @mouseover="section.hover = true" @mouseleave="section.hover = false;" >
+
+                     <div >
+                        <Transition>
+                        <input v-if="section.hover == true" v-model="section.search" @keyup="searchProject(index)" class="new-project" placeholder="Новый проект"  />
+                        </Transition>
+                        <Transition>
+                        <div v-if="section.hover == true && section.results.length > 0" style="padding: 12px 25px; width: 210px;; border-radius: 25px; margin-top: 15px; background: #FFF;">
+                           <p v-for="(res, res_i) in section.results" style="margin: 0; font-family: 'Raleway'; font-size: 12; font-weight: 400; color: #464255" @click="addProject(index, res.id, $event)">{{res.name}}</p>
+                        </div>
+                        </Transition>
+                     </div>
+                  
                </div>
             </div>
          </div>
@@ -106,8 +125,6 @@ createApp({
          detail: '#(detail)',
          confID: '#(confID)',
          sections: [],
-         search: null,
-         results: []
       }
    },
    mounted() {
@@ -116,6 +133,20 @@ createApp({
         url: '/cf/section/' + this.confID
       }).then((response) => {
        this.sections = response.data
+       this.sections.forEach( (section, sec_i) => {
+         this.sections[sec_i].projects.forEach( (proj, proj_i) => {
+
+            axios({
+                 method: 'get',
+                 url: 'http://api.conference.silaeder.ru/project/' + this.sections[sec_i].projects[proj_i].frgnID,
+               }).then( (response) => {
+                this.sections[sec_i].projects[proj_i].data = response.data
+              })
+              .catch(function (error) {
+                console.log(error);
+              });
+         } )
+      });
      })
      .catch(function (error) {
        console.log(error);
@@ -178,11 +209,53 @@ createApp({
        console.log(error);
      });
     },
-    searchProject() {
-      if (this.search.length > 3) {
-         this.results = ["ABOBA", "BOBO", "COCO"]
-      }
-    }
+    searchProject(index) {
+      axios({
+        method: 'get',
+        url: 'http://api.conference.silaeder.ru/project?q=' + this.sections[index].search,
+      }).then( (response) => {
+       this.sections[index].results = response.data
+     })
+     .catch(function (error) {
+       console.log(error);
+     });
+    },
+    addProject(sec_index, proj_id, e) {
+      axios({
+        method: 'post',
+        url: '/cf/sc/project/' + this.sections[sec_index].id,
+        data: {
+          id: proj_id,
+        }
+      }).then((response) => {
+         var new_proj = response.data
+       axios({
+                 method: 'get',
+                 url: 'http://api.conference.silaeder.ru/project/' + new_proj.frgnID,
+               }).then( (responsee) => {
+                  new_proj.data = responsee.data
+                this.sections[sec_index].projects.push(new_proj) 
+              })
+              .catch(function (error) {
+                console.log(error);
+              });
+     })
+     .catch(function (error) {
+       console.log(error);
+     });
+    },
+    removeProject(pr_id, sec_i, pr_i) {
+      this.sections[sec_i].projects.splice(pr_i, 1);
+      axios({
+        method: 'post',
+        url: '/cf/pr/del/' + pr_id
+      }).then(function (response) {
+       console.log(response);
+     })
+     .catch(function (error) {
+       console.log(error);
+     });
+    },
   }
 }).mount('#app')
 </script>

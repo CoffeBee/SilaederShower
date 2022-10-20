@@ -14,6 +14,7 @@ final class Section: Model {
     struct Public: Content {
         let id: UUID
         let name: String
+        let projects: [Project.Public]
     }
     
     static let schema = "sections"
@@ -45,15 +46,19 @@ final class Section: Model {
 
 final class Project: Model {
     
-    struct Public: Content {
-        let id: UUID
-        let name: String
-    }
-    
     static let schema = "projects"
     
-    @ID(custom: "id", generatedBy: .user)
-    var id: Int?
+    struct Public: Content {
+        let id: UUID
+        let frgnID: Int
+        
+    }
+    
+    @ID(key: .id)
+    var id: UUID?
+    
+    @Field(key: "frgn_id")
+    var frgnID: Int
     
     @OptionalParent(key: "next_id")
     var nextProject: Project?
@@ -63,8 +68,9 @@ final class Project: Model {
     
     init() {}
     
-    init(id: Int? = nil, sectionID: Section.IDValue) throws {
+    init(id: UUID? = nil, frgnID: Int, sectionID: Section.IDValue) {
         self.id = id
+        self.frgnID = frgnID
         self.$section.id = sectionID
     }
 }
