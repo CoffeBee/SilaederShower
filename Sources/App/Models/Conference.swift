@@ -11,7 +11,8 @@ import Vapor
 final class Conference: Model {
     struct Public: Content {
         let id: UUID
-        let name: String
+        let title: String
+        let selected: Bool
     }
     
     static let schema = "conferences"
@@ -28,9 +29,15 @@ final class Conference: Model {
     @Field(key: "secret_hash")
     var secretHash: String
     
+    @Timestamp(key: "created_at", on: .create)
+    var createdAt: Date?
+    
+    @OptionalParent(key: "first_id")
+    var firstSection: Section?
+    
     init() {}
     
-    init(id: UUID? = nil) throws {
+    init(id: UUID? = nil, new: Bool) throws {
         self.id = id
         self.title = "Очередная конференция"
         self.detail = "Описание очередной конференции"
