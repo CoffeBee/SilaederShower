@@ -35,8 +35,19 @@ struct AddProject: Content {
 }
 
 struct ConferenceController: RouteCollection {
+    
+    let app: Application
+    init (app: Application) {
+        self.app = app
+    }
+    
     func boot(routes: RoutesBuilder) throws {
-        let conferencesRoute = routes.grouped("cf")
+        let session = routes.grouped([
+            SessionsMiddleware(session: self.app.sessions.driver),
+                UserSessionAuthenticator(),
+                UserCredentialsAuthenticator(),
+            ])
+        let conferencesRoute = session.grouped("cf")
         
         conferencesRoute.get("", use: emptryConf)
         conferencesRoute.post("add", use: addConf)
@@ -58,8 +69,9 @@ struct ConferenceController: RouteCollection {
     
     
     fileprivate func getConfs(req: Request, selected: UUID?) -> EventLoopFuture<[Conference.Public]> {
-        return Conference.query(on: req.db).all().flatMapThrowing { confs in
-            try confs.map { conf in
+        return Conference.query(on: req.db).sort(\.$createdAt).all().flatMapThrowing { confs in
+            
+            try confs.reversed().map { conf in
                 
                 try Conference.Public(id: conf.requireID(), title: conf.title, selected: conf.requireID() == selected)
                 
@@ -68,6 +80,9 @@ struct ConferenceController: RouteCollection {
     }
     
     fileprivate func emptryConf(req: Request) throws -> EventLoopFuture<View> {
+        guard let _ = req.auth.get(User.self) else {
+            throw Abort.redirect(to: "/login")
+        }
         return Conference.query(on: req.db).sort(\.$createdAt).first().flatMapThrowing { confOptional in
             if let conf = confOptional {
                 throw try Abort.redirect(to: "/cf/" + conf.requireID().uuidString)
@@ -122,6 +137,9 @@ struct ConferenceController: RouteCollection {
     }
     
     fileprivate func viewConf(req: Request) throws -> EventLoopFuture<View> {
+        guard let _ = req.auth.get(User.self) else {
+            throw Abort.redirect(to: "/login")
+        }
         let confStr = req.parameters.get("id")!
         guard let confID = UUID(uuidString: confStr) else {
             throw Abort.redirect(to: "/cf")
@@ -136,6 +154,9 @@ struct ConferenceController: RouteCollection {
     }
     
     fileprivate func titleChange(req: Request) throws -> EventLoopFuture<HTTPStatus> {
+        guard let _ = req.auth.get(User.self) else {
+            throw Abort.redirect(to: "/login")
+        }
         let confStr = req.parameters.get("id")!
         guard let confID = UUID(uuidString: confStr) else {
             throw Abort(.badRequest)
@@ -148,6 +169,9 @@ struct ConferenceController: RouteCollection {
     }
     
     fileprivate func detailChange(req: Request) throws -> EventLoopFuture<HTTPStatus> {
+        guard let _ = req.auth.get(User.self) else {
+            throw Abort.redirect(to: "/login")
+        }
         let confStr = req.parameters.get("id")!
         guard let confID = UUID(uuidString: confStr) else {
             throw Abort(.badRequest)
@@ -160,6 +184,9 @@ struct ConferenceController: RouteCollection {
     }
     
     fileprivate func addConf(req: Request) throws -> EventLoopFuture<Response> {
+        guard let _ = req.auth.get(User.self) else {
+            throw Abort.redirect(to: "/login")
+        }
         let newConf = try Conference(new: true)
         return newConf.save(on: req.db).map {
             return req.redirect(to: "/cf")
@@ -167,6 +194,9 @@ struct ConferenceController: RouteCollection {
     }
     
     fileprivate func sectionAdd(req: Request) throws -> EventLoopFuture<Section.Public> {
+        guard let _ = req.auth.get(User.self) else {
+            throw Abort.redirect(to: "/login")
+        }
         let confStr = req.parameters.get("id")!
         guard let confID = UUID(uuidString: confStr) else {
             throw Abort(.badRequest)
@@ -190,6 +220,9 @@ struct ConferenceController: RouteCollection {
     }
     
     fileprivate func sections(req: Request) throws -> EventLoopFuture<[Section.Public]> {
+        guard let _ = req.auth.get(User.self) else {
+            throw Abort.redirect(to: "/login")
+        }
         let confStr = req.parameters.get("id")!
         guard let confID = UUID(uuidString: confStr) else {
             throw Abort(.badRequest)
@@ -202,6 +235,9 @@ struct ConferenceController: RouteCollection {
     }
     
     fileprivate func changeName(req: Request) throws -> EventLoopFuture<HTTPStatus> {
+        guard let _ = req.auth.get(User.self) else {
+            throw Abort.redirect(to: "/login")
+        }
         let sectionStr = req.parameters.get("id")!
         guard let sectionID = UUID(uuidString: sectionStr) else {
             throw Abort(.badRequest)
@@ -214,6 +250,9 @@ struct ConferenceController: RouteCollection {
     }
     
     fileprivate func addProject(req: Request) throws -> EventLoopFuture<Project.Public> {
+        guard let _ = req.auth.get(User.self) else {
+            throw Abort.redirect(to: "/login")
+        }
         let sectionStr = req.parameters.get("id")!
         guard let sectionID = UUID(uuidString: sectionStr) else {
             throw Abort(.badRequest)
@@ -237,6 +276,9 @@ struct ConferenceController: RouteCollection {
     }
     
     fileprivate func delProject(req: Request) throws -> EventLoopFuture<HTTPStatus> {
+        guard let _ = req.auth.get(User.self) else {
+            throw Abort.redirect(to: "/login")
+        }
         let projectStr = req.parameters.get("id")!
         guard let projectID = UUID(uuidString: projectStr) else {
             throw Abort(.badRequest)

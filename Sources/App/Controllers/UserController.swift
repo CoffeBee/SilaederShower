@@ -7,18 +7,32 @@
 
 import Vapor
 import Fluent
+import AsyncHTTPClient
 
-struct UserAuth: Content {
-    let login: String
-    let password: String
-}
 
 struct UserController: RouteCollection {
+    
+    let app: Application
+    
+    init(app: Application) {
+        self.app = app
+    }
+    
     func boot(routes: RoutesBuilder) throws {
-        let usersRoute = routes.grouped("users")
-        
-        usersRoute.get("login", use: loginGet)
-        usersRoute.post("login", use: loginPost)
+        let session = routes.grouped([
+            SessionsMiddleware(session: self.app.sessions.driver),
+                UserSessionAuthenticator(),
+                UserCredentialsAuthenticator(),
+            ])
+        routes.get("login", use: loginGet)
+        session.post("login", use: loginPost)
+        session.get { req -> Response in
+            guard let _ = req.auth.get(User.self) else {
+                return req.redirect(to: "/login")
+            }
+            return req.redirect(to: "/cf")
+
+        }
     }
     
     
@@ -27,19 +41,13 @@ struct UserController: RouteCollection {
     }
    
     
-    fileprivate func loginPost(req: Request) throws -> EventLoopFuture<View> {
-        let authForm = try req.content.decode(UserAuth.self)
-        return User.query(on: req.db).filter(\.$username == authForm.login).first().flatMapThrowing { userOptional in
-            if let user = userOptional {
-                if try Bcrypt.verify(authForm.password, created: user.passwordHash) {
-                    throw Abort.redirect(to: "/cf")
-                }
-                return req.view.render("reg", ["error": true])
-            }
-            return req.view.render("reg", ["error": true])
-            
-        }.flatMap { $0 }
+    fileprivate func loginPost(req: Request) throws -> EventLoopFuture<Response> {
+        
+        guard let user = req.auth.get(User.self) else {
+            return req.view.render("reg", ["error": true]).flatMapThrowing { $0.encodeResponse(for: req) }.flatMap { $0 }
+       }
+        req.session.authenticate(user)
+        return req.eventLoop.makeSucceededFuture(req.redirect(to: "/cf"))
     }
     
 }
-
