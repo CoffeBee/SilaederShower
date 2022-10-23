@@ -9,6 +9,10 @@ import Fluent
 import Vapor
 import Foundation
 
+enum ProjectStatus: String, Codable {
+    case none, active, done
+}
+
 final class Section: Model {
     
     struct Public: Content {
@@ -49,8 +53,18 @@ final class Project: Model {
     static let schema = "projects"
     
     struct Public: Content {
-        let id: UUID
+        init (project: Project) {
+            self.id = project.id
+            self.frgnID = project.frgnID
+            self.status = project.status
+            self.stoppedAt = project.stoppedAt?.timeIntervalSince1970
+            self.startedAt = project.startedAt?.timeIntervalSince1970
+        }
+        let id: UUID?
         let frgnID: Int
+        let status: ProjectStatus
+        let startedAt: Double?
+        let stoppedAt: Double?
         
     }
     
@@ -66,11 +80,21 @@ final class Project: Model {
     @Parent(key: "section_id")
     var section: Section
     
+    @Enum(key: "status")
+    var status: ProjectStatus
+    
+    @Timestamp(key: "started_at", on: .none)
+    var startedAt: Date?
+    
+    @Timestamp(key: "stopped_at", on: .none)
+    var stoppedAt: Date?
+    
     init() {}
     
     init(id: UUID? = nil, frgnID: Int, sectionID: Section.IDValue) {
         self.id = id
         self.frgnID = frgnID
         self.$section.id = sectionID
+        self.status = .none
     }
 }

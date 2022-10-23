@@ -3,7 +3,7 @@
 
 
 body{
-	background: #f3f2f7;
+	background: #ECEBF0;
 	margin: 0px;
 }
 
@@ -20,7 +20,6 @@ body{
   	background: #f7f7fa;
   	border-radius: 10px;
   	transition: 1s;
-  	border: 2px solid white;
   	overflow: hidden;
   	/*border: 1px;*/
   	/*margin-left: 10px;*/
@@ -150,3 +149,25 @@ body{
 	border-radius: 25px;
 }
 
+.bhover {
+	border: solid 2px #E2E1E5;
+}
+
+.active {
+	border: solid 1px #FF5B5B;
+}
+
+.done {
+	border: solid 1px #00A389;
+}
+.stop {
+
+font-family: 'Raleway';
+font-style: normal;
+font-weight: 700;
+font-size: 14px;
+line-height: 26px;
+
+color: #FF5B5B;
+margin:  0;
+}

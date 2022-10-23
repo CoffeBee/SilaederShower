@@ -18,21 +18,10 @@ struct CreateUser: Migration {
             .field("password_hash", .string, .required)
             .field("is_admin", .bool, .required)
             .create()
-            .flatMap {
-                database.schema(Token.schema)
-                    .field("id", .uuid)
-                    .field("user_id", .uuid, .references(User.schema, "id"))
-                    .field("value", .string, .required)
-                    .unique(on: "value")
-                    .field("source", .int, .required)
-                    .field("created_at", .datetime, .required)
-                    .field("expires_at", .datetime)
-                    .create()
-            }
     }
 
     func revert(on database: Database) -> EventLoopFuture<Void> {
-        return database.schema(Token.schema).delete().flatMap { database.schema(User.schema).delete() }
+        return database.schema(User.schema).delete()
     }
 }
 

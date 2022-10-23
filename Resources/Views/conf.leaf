@@ -2,11 +2,13 @@
 <html>
    <head>
       <link rel="stylesheet" href="/styles/home_css.css">
+      
       <script src="/home_scripts.js"></script>
       <meta charset="UTF-8">
       <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
       <script   src="https://code.jquery.com/jquery-3.6.1.min.js"   integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="   crossorigin="anonymous"></script>
       <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://unpkg.com/vue-click@latest"></script>
 
    </head>
    <body>
@@ -60,8 +62,10 @@
                border-radius: 0;
             margin-bottom: 0px;;width: auto; background: transparent" @blur="sendDetail" contenteditable>{{detail}}</span>
          </span>
-         <img src="/images/start.svg" style="margin-left: 35px; height: 80px; width: 80px;">
-         <img src="/images/peoples.svg" style="margin-left: 35px; height: 80px; height: 80px">
+         <div style="position: absolute; right: 30px;">
+            <img @click="openAdmin" @mouseover="start_hover = true" @mouseleave="start_hover = false" :class="{bhover: start_hover == true}" src="/images/start.svg" style=" background: white; padding: 17.5px; border-radius: 18px; box-sizing: border-box; height: 70px; width: 70px;">
+         <img @click="openShower" @mouseover="people_hover = true" @mouseleave="people_hover = false" :class="{bhover: people_hover == true}" src="/images/peoples.svg" style="margin-left: 25px; background: white; border-radius: 18px;  padding: 17.5px; box-sizing: border-box;  height: 70px; height: 70px">
+         </div>
       </div>
 
       <div id="plan">
@@ -81,27 +85,35 @@
             margin-bottom: 0px;;width: auto; background: transparent" @blur="sendName(index, $event)" contenteditable>{{section.name}}</span>
             </div>
             <div class="projects">
-               <div style="max-height: calc(100vh - 226px - 200px);position: relative;overflow-y: scroll;display: flex;
+               <div :id="section.id" style="max-height: calc(100vh - 226px - 200px);position: relative;overflow-y: scroll;display: flex;
    flex-direction: column;
    margin-bottom: 20px;">
-                  <div class="project" style="margin-bottom: 30px;" v-for="(project, pr_id) in section.projects">
+                  <div class="project" :class="{active: project.status == 'active', done: project.status == 'done'}"  @dblclick="startPres(project.id, index, pr_id)" @mouseover="project.hover = true" @mouseleave="project.hover = false" style="margin-bottom: 30px;" v-for="(project, pr_id) in section.projects">
                         <div style="position: relative;">
-                           <p style="margin: 0; margin-left: -5px; display: inline-block; border-radius: 15px; padding: 8px 16px; background: rgba(255, 187, 84, 0.15);font-family: 'Raleway';font-style: normal;font-weight: 500;font-size: 16px;letter-spacing: 0.4px;color: #FFBB54;">{{project.data.presentation.teacher}}</p>
+                           <p style="margin: 0; margin-left: -5px; display: inline-block; border-radius: 15px; padding: 8px 16px; background: rgba(255, 161, 38, 0.15);font-family: 'Raleway';font-style: normal;font-weight: 500;font-size: 16px;letter-spacing: 0.4px;color: #FFA126;">{{project.data.presentation.teacher}}</p>
                         <p style="margin: 0; margin-top:  15px; font-family: 'Raleway'; font-weight: 500; font-size: 18px; color: #464255">{{project.data.name}}</p>
-                        <p style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE">est 10:00-10:05 </p>
-                        <img @click="removeProject(project.id, index, pr_id)" src="/images/del.svg" style="position: absolute; top: 5px; right: 0px;" />
+                        <p v-if="project.status == 'none'" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE">est 10:00-10:05 </p>
+                        <p v-if="project.status == 'done'" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE"> {{project.timeStr}}</p>
+                        <p v-if="project.status == 'active' &&  project.rest > 0" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE">Осталось {{ project.restStr }}</p>
+                         <p v-if="project.status == 'active' &&  project.rest <= 0" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #FF5B5B">Время вышло</p>
+
+                        <p @click="stopPres(project.id, index, pr_id)" v-if="project.status == 'active'" class="stop">Завершить</p>
+                        
+                        <Transition>
+                        <img v-if="project.hover === true" @click="removeProject(project.id, index, pr_id)" src="/images/del.svg" style="position: absolute; top: 5px; right: 0px; width: 10px; height: 10px;" />
                         </div>
+                     </Transition>
                      </div>
                </div>
-               <div style="width: 270px; height: 120px; background: #ECEAF3; border-radius: 25px;padding: 15px;" @mouseover="section.hover = true" @mouseleave="section.hover = false;" >
+               <div style="width: 270px; min-height: 120px; background: #E2E1E5; border-radius: 25px;padding: 15px;" @mouseover="section.hover = true" @mouseleave="section.hover = false;" >
 
                      <div >
                         <Transition>
-                        <input v-if="section.hover == true" v-model="section.search" @keyup="searchProject(index)" class="new-project" placeholder="Новый проект"  />
+                        <input v-if="section.hover == true" v-model="section.search" @keyup="searchProject(index, section.id)" class="new-project" placeholder="Новый проект"  />
                         </Transition>
                         <Transition>
-                        <div v-if="section.hover == true && section.results.length > 0" style="padding: 12px 25px; width: 210px;; border-radius: 25px; margin-top: 15px; background: #FFF;">
-                           <p v-for="(res, res_i) in section.results" style="margin: 0; font-family: 'Raleway'; font-size: 12; font-weight: 400; color: #464255" @click="addProject(index, res.id, $event)">{{res.name}}</p>
+                        <div v-if="section.hover == true && section.results.length > 0" style="padding: 12px 25px; width: 210px;; border-radius: 25px; margin-top: 15px; background: #FFF;display: flex; flex-direction: column; gap: 10px">
+                           <p v-for="(res, res_i) in section.results" style="margin: 0; font-family: 'Raleway'; font-size: 12; font-weight: 400; color: #464255" @click="addProject(index, res.id, section.id, $event)">{{res.name}}</p>
                         </div>
                         </Transition>
                      </div>
@@ -115,6 +127,7 @@
    openNav();
    </script>
 </body>
+
 <script>
 
 const {createApp} = Vue
@@ -125,9 +138,12 @@ createApp({
          detail: '#(detail)',
          confID: '#(confID)',
          sections: [],
+         start_hover: false,
+         people_hover: false
       }
    },
    mounted() {
+      
     axios({
         method: 'get',
         url: '/cf/section/' + this.confID
@@ -141,6 +157,15 @@ createApp({
                  url: 'http://api.conference.silaeder.ru/project/' + this.sections[sec_i].projects[proj_i].frgnID,
                }).then( (response) => {
                 this.sections[sec_i].projects[proj_i].data = response.data
+                if (this.sections[sec_i].projects[proj_i].status == "done") {
+                  let stop = this.sections[sec_i].projects[proj_i].stoppedAt 
+                  let start = this.sections[sec_i].projects[proj_i].startedAt
+                  this.sections[sec_i].projects[proj_i].timeStr = this.prettyTime(start) + " - " + this.prettyTime(stop)
+                }
+                
+                  this.sections[sec_i].projects[proj_i].restUpdater = setInterval(() => {
+                      this.updateRests(sec_i, proj_i)
+                     }, 1000)
               })
               .catch(function (error) {
                 console.log(error);
@@ -153,6 +178,10 @@ createApp({
      });
   },
    methods: {
+    prettyTime(unix) {
+      let date = new Date(unix * 1000)
+      return ("0" + date.getHours()).substr(-2) + ":" + ("0" + date.getMinutes()).substr(-2)
+    },
     sendTitle(e) {
       this.title = e.target.innerHTML;
       axios({
@@ -214,13 +243,17 @@ createApp({
         method: 'get',
         url: 'http://api.conference.silaeder.ru/project?q=' + this.sections[index].search,
       }).then( (response) => {
-       this.sections[index].results = response.data
+       if (response.data.length > 5) {
+         this.sections[index].results = []
+       } else {
+         this.sections[index].results = response.data
+       }
      })
      .catch(function (error) {
        console.log(error);
      });
     },
-    addProject(sec_index, proj_id, e) {
+    addProject(sec_index, proj_id, sectionID, e) {
       axios({
         method: 'post',
         url: '/cf/sc/project/' + this.sections[sec_index].id,
@@ -233,8 +266,17 @@ createApp({
                  method: 'get',
                  url: 'http://api.conference.silaeder.ru/project/' + new_proj.frgnID,
                }).then( (responsee) => {
+                  new_proj.data
                   new_proj.data = responsee.data
-                this.sections[sec_index].projects.push(new_proj) 
+                  this.sections[sec_index].projects.push(new_proj)
+                  let proj_i = this.sections[sec_index].projects.length - 1
+                  this.sections[sec_index].projects[proj_i].restUpdater = setInterval(() => {
+                      this.updateRests(sec_index, proj_i)
+                     }, 1000)
+                  setTimeout(() => {
+                     var all_projects = document.getElementById(sectionID);
+                  all_projects.scrollTop += 500;
+               }, 100)
               })
               .catch(function (error) {
                 console.log(error);
@@ -255,6 +297,70 @@ createApp({
      .catch(function (error) {
        console.log(error);
      });
+    },
+    startPres(pr_id, sec_i, pr_index) {
+      console.log(this.start_start)
+      
+      axios({
+        method: 'post',
+        url: '/cf/sh/prs/' + this.confID,
+        data: {newID: pr_id},
+      }).then((response) => {
+       for (var i = 0; i < this.sections[sec_i].projects.length; i++) {
+         if (this.sections[sec_i].projects[i].status == "active") {
+            this.sections[sec_i].projects[i].status = "done"
+            this.sections[sec_i].projects[i].stoppedAt = Date.now() / 1000
+            let stop = this.sections[sec_i].projects[i].stoppedAt 
+                  let start = this.sections[sec_i].projects[i].startedAt
+                  this.sections[sec_i].projects[i].timeStr = this.prettyTime(start) + " - " + this.prettyTime(stop)
+         }
+       }
+      this.sections[sec_i].projects[pr_index].status = "active"
+       this.sections[sec_i].projects[pr_index].startedAt = Date.now() / 1000
+
+     })
+     .catch(function (error) {
+       console.log(error);
+     });
+    },
+    updateRests(sec_i, proj_i) {
+     let rest = Date.now() / 1000 - this.sections[sec_i].projects[proj_i].startedAt;
+                rest = this.sections[sec_i].projects[proj_i].data.time * 60 - rest
+      let restDate = new Date(rest * 1000)
+                var minutes = "0" + restDate.getMinutes();
+                var seconds = "0" + restDate.getSeconds();
+      this.sections[sec_i].projects[proj_i].restStr = minutes.substr(-2) + ':' + seconds.substr(-2);
+      this.sections[sec_i].projects[proj_i].rest = rest
+
+         
+    },
+    stopPres(pr_id, sec_i, pr_index) {
+      console.log(this.start_start)
+      
+      axios({
+        method: 'post',
+        url: '/cf/sh/stop/' + this.confID,
+        data: {newID: pr_id},
+      }).then((response) => {
+       for (var i = 0; i < this.sections[sec_i].projects.length; i++) {
+         if (this.sections[sec_i].projects[i].status == "active") {
+            this.sections[sec_i].projects[i].status = "done"
+            this.sections[sec_i].projects[i].stoppedAt = Date.now() / 1000
+            let stop = this.sections[sec_i].projects[i].stoppedAt 
+                  let start = this.sections[sec_i].projects[i].startedAt
+                  this.sections[sec_i].projects[i].timeStr = this.prettyTime(start) + " - " + this.prettyTime(stop)
+         }
+       }
+     })
+     .catch(function (error) {
+       console.log(error);
+     });
+    },
+    openShower() {
+         window.open('/cf/view/#(confID)').focus()
+    },
+    openAdmin() {
+         window.open('/cf/admin/#(confID)').focus()
     },
   }
 }).mount('#app')
