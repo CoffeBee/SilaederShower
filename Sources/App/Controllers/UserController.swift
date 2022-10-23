@@ -30,6 +30,7 @@ struct UserController: RouteCollection {
         routes.get("login", use: loginGet)
         routes.get("guest", use: guestGet)
         session.post("login", use: loginPost)
+        routes.get("video", ":pb", use: video)
         session.post("guest", use: guestPost)
         session.get { req -> Response in
             guard let _ = req.auth.get(User.self) else {
@@ -73,6 +74,12 @@ struct UserController: RouteCollection {
        }
         req.session.authenticate(user)
         return req.eventLoop.makeSucceededFuture(req.redirect(to: "/cf"))
+    }
+    
+    
+    fileprivate func video(req: Request) throws -> EventLoopFuture<View> {
+        let pb = req.parameters.get("pb")!
+        return req.view.render("video", ["pb" : pb])
     }
     
 }

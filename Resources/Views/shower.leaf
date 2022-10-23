@@ -127,7 +127,7 @@
           let slide = msg.data.slide;
           nowPage = slide
           if (video_slides.includes(nowPage)) {
-            window.open(`http://192.168.0.187:1617/video/${video_links[nowPage]}`, '_blank').focus();
+            window.open(`/video/${video_links[nowPage]}`, '_blank').focus();
           }
           ppdf.getPage(nowPage).then(function(page) {
             var scale = Math.min(window.innerWidth / page.getViewport({
