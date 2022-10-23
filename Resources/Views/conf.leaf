@@ -2,7 +2,7 @@
 <html>
    <head>
       <link rel="stylesheet" href="/styles/home_css.css">
-      
+
       <script src="/home_scripts.js"></script>
       <meta charset="UTF-8">
       <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -52,17 +52,17 @@
       <div class="header">
          <span class="Info">
             
-            <span style="font-family: Raleway; font-weight: 600; font-size: 32px;border: none;
+            <span class="h11" style="font-family: Raleway; font-weight: 600; font-size: 32px;border: none;
                outline: none; display: block;
                border-radius: 0;
             margin-bottom: 0px; margin-top: 0px;width: auto; background: transparent" @blur="sendTitle" contenteditable>{{title}}</span>
             
-            <span style="font-family: Raleway; font-weight: 400; font-size: 14px;border: none;
+            <span class="h22" style="font-family: Raleway; font-weight: 400; font-size: 14px;border: none;
                outline: none; display: block; margin-top: 16px;
                border-radius: 0;
             margin-bottom: 0px;;width: auto; background: transparent" @blur="sendDetail" contenteditable>{{detail}}</span>
          </span>
-         <div style="position: absolute; right: 30px;">
+         <div class="links" style="position: absolute; right: 30px;">
             <img @click="openAdmin" @mouseover="start_hover = true" @mouseleave="start_hover = false" :class="{bhover: start_hover == true}" src="/images/start.svg" style=" background: white; padding: 17.5px; border-radius: 18px; box-sizing: border-box; height: 70px; width: 70px;">
          <img @click="openShower" @mouseover="people_hover = true" @mouseleave="people_hover = false" :class="{bhover: people_hover == true}" src="/images/peoples.svg" style="margin-left: 25px; background: white; border-radius: 18px;  padding: 17.5px; box-sizing: border-box;  height: 70px; height: 70px">
          </div>
@@ -71,7 +71,7 @@
       <div id="plan">
          <img src="/images/add.svg" v-if="sections.length === 0" @click="sectionAdd"/>
          <div class="section" v-for="(section, index) in sections">
-            <div style="height: 60px; margin-bottom: 20px"> 
+            <div class="sec_he" style="height: 60px; margin-bottom: 20px"> 
                <div style="display: flex; justify-content: space-between;" v-if="index == sections.length - 1">
                   <span style="font-family: Raleway; font-weight: 500; font-size: 21px;border: none;
                outline: none; display: block;
@@ -90,14 +90,14 @@
    margin-bottom: 20px;">
                   <div class="project" :class="{active: project.status == 'active', done: project.status == 'done'}"  @dblclick="startPres(project.id, index, pr_id)" @mouseover="project.hover = true" @mouseleave="project.hover = false" style="margin-bottom: 30px;" v-for="(project, pr_id) in section.projects">
                         <div style="position: relative;">
-                           <p style="margin: 0; margin-left: -5px; display: inline-block; border-radius: 15px; padding: 8px 16px; background: rgba(255, 161, 38, 0.15);font-family: 'Raleway';font-style: normal;font-weight: 500;font-size: 16px;letter-spacing: 0.4px;color: #FFA126;">{{project.data.presentation.teacher}}</p>
-                        <p style="margin: 0; margin-top:  15px; font-family: 'Raleway'; font-weight: 500; font-size: 18px; color: #464255">{{project.data.name}}</p>
-                        <p v-if="project.status == 'none'" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE">est 10:00-10:05 </p>
-                        <p v-if="project.status == 'done'" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE"> {{project.timeStr}}</p>
-                        <p v-if="project.status == 'active' &&  project.rest > 0" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE">Осталось {{ project.restStr }}</p>
-                         <p v-if="project.status == 'active' &&  project.rest <= 0" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #FF5B5B">Время вышло</p>
+                           <p class="comp" style="margin: 0; margin-left: -5px; display: inline-block; border-radius: 15px; padding: 8px 16px; background: rgba(255, 161, 38, 0.15);font-family: 'Raleway';font-style: normal;font-weight: 500;font-size: 16px;letter-spacing: 0.4px;color: #FFA126;">{{project.data.presentation.teacher}}</p>
+                        <p class="title" style="margin: 0; margin-top:  15px; font-family: 'Raleway'; font-weight: 500; font-size: 18px; color: #464255">{{project.data.name}}</p>
+                        <p class="time" v-if="project.status == 'none'" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE">est 10:00-10:05 </p>
+                        <p class="time" v-if="project.status == 'done'" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE"> {{project.timeStr}}</p>
+                        <p class="time" v-if="project.status == 'active' &&  project.rest > 0" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE">Осталось {{ project.restStr }}</p>
+                         <p class="time" v-if="project.status == 'active' &&  project.rest <= 0" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #FF5B5B">Время вышло</p>
 
-                        <p @click="stopPres(project.id, index, pr_id)" v-if="project.status == 'active'" class="stop">Завершить</p>
+                        <p class="end stop" @click="stopPres(project.id, index, pr_id)" v-if="project.status == 'active'">Завершить</p>
                         
                         <Transition>
                         <img v-if="project.hover === true" @click="removeProject(project.id, index, pr_id)" src="/images/del.svg" style="position: absolute; top: 5px; right: 0px; width: 10px; height: 10px;" />
@@ -105,7 +105,7 @@
                      </Transition>
                      </div>
                </div>
-               <div style="width: 270px; min-height: 120px; background: #E2E1E5; border-radius: 25px;padding: 15px;" @mouseover="section.hover = true" @mouseleave="section.hover = false;" >
+               <div class="rec_nw" style="width: 270px; min-height: 120px; background: #E2E1E5; border-radius: 25px;padding: 15px;" @mouseover="section.hover = true" @mouseleave="section.hover = false;" >
 
                      <div >
                         <Transition>
@@ -143,7 +143,10 @@ createApp({
       }
    },
    mounted() {
-      
+      if (window.screen.width < 768) {
+         document.getElementById("slidebar").style.display = "none"
+         document.getElementById("app").style.marginLeft = "10px"
+      }
     axios({
         method: 'get',
         url: '/cf/section/' + this.confID

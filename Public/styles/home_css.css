@@ -27,6 +27,22 @@ body{
 
 }
 
+@media all and (max-width: 980px) {
+	.links {
+		display: none;
+	}
+	.h11 {
+		font-size: 60px !important;
+	}
+	.h22 {
+		display: none !important;
+	}
+	#app {
+		margin-left: 30px !important;
+		width: calc(100vw - 60px);
+	}
+}
+
 .plus{
 	height: 19px;
 	width: 19px;
@@ -109,6 +125,14 @@ body{
 	overflow: scroll;
 }
 
+@media all and (max-width: 980px) {
+	#plan  {
+		width: calc(100vw) !important;
+		margin-bottom: 15px;	
+		
+	}
+}
+
 
 .section {
 	min-width: 300px;
@@ -117,9 +141,39 @@ body{
 	
 }
 
+@media all and (max-width: 980px) {
+	.section {
+		min-width: calc(100vw - 80px);
+		max-width: calc(100vw - 80px); 
+		margin-bottom: 15px;	
+		
+	}
+	.comp {
+		font-size: 49px !important;
+		margin-left: -5px;
+	}
+	.title {
+font-size: 54px !important;
+margin-top: 30px !important;
+	}
+	.time {
+font-size: 42px !important;
+margin-top: 30px !important;;
+	}
+	.end {
+font-size: 42px !important;
+margin-top: 50px !important;;
+	}
+	.project {
+		padding: 40px !important;
+	}
+}
+
 .projects {
 	
 }
+
+
 
 .new-project {
 	border-radius: 18px;
@@ -131,6 +185,18 @@ body{
   color:  #A3A3A3;
   border: none;
                outline: none; 
+}
+
+@media all and (max-width: 980px) {
+	.new-project {
+		display: none !important;
+	}
+	.rec_nw {
+		display: none !important;
+	}
+	.sec_he {
+		display: none;
+	}
 }
 
 .v-enter-active,

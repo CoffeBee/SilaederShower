@@ -10,7 +10,10 @@
         #else:
             <div class="wrapper error" align="center">
         #endif
+        <div style="display: flex; justify-content: space-between; align-items: start;">
 			<img src="/images/logo.svg" class="logo"/>
+                   <button style="margin: 0" class="login"><a style="text-decoration: none; color: #FFF" href="/guest">Guest</a></button>
+   </div>
 			<form id="login" method="POST" action="?">
 				<input class="field" type="text" placeholder="Email or username"/ name="username">
 				<div class="password">

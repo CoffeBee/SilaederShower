@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+	<head>
+ <meta name="viewport" content="width=device-width, initial-scale=0.7 maximum-scale=0.7">
+		<link rel="stylesheet" href="/styles/reg_css.css">
+	</head>
+	<body class="body">
+        #if(error == false):
+            <div class="wrapper" align="center">
+        #else:
+            <div class="wrapper error" align="center">
+        #endif
+			<img src="/images/logo.svg" class="logo"/>
+			<form id="login" method="POST" action="?">
+                <input class="field" type="password" id="password-input" placeholder="PIN"/ name="code">
+			</form>
+			<div class="submit">
+				<button type="submit" form="login" class="login">Login</button>
+			</div>
+            #if(error == true):
+                <p class="error_text">Password or login is incorrect</p>
+            #endif
+		</div>
+	</body>
+</html>
