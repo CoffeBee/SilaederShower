@@ -34,9 +34,32 @@ struct AddProject: Content {
     let id: Int
 }
 
+struct ChangePresentation: Content {
+    let newID: UUID
+}
+
+struct ChangeSlide: Content {
+    let slide: Int
+}
+
+struct ChangePresentationMessage: Content {
+    struct ChangePresentation: Content {
+        let newID: Int
+    }
+    let data: ChangePresentation
+    var type = "presentation"
+}
+
+struct ChangeSlideMessage: Content {
+    let data: ChangeSlide
+    var type = "slide"
+}
+
 struct ConferenceController: RouteCollection {
     
     let app: Application
+    let shower = ShowerStorage()
+    
     init (app: Application) {
         self.app = app
     }
@@ -56,7 +79,9 @@ struct ConferenceController: RouteCollection {
         conferencesRoute.post("detail", ":id", use: detailChange)
         conferencesRoute.post("section", ":id", use: sectionAdd)
         conferencesRoute.get("section", ":id", use: sections)
-        
+        routes.get("cf", "view", ":id", use: showerConf)
+        conferencesRoute.get("admin", ":id", use: adminConf)
+        routes.webSocket("cf", "ws", ":id", onUpgrade: wsConf)
         let sectionsRoute = conferencesRoute.grouped("sc")
         
         sectionsRoute.post("name", ":id", use: changeName)
@@ -64,6 +89,12 @@ struct ConferenceController: RouteCollection {
         
         let projectsRoute = conferencesRoute.grouped("pr")
         projectsRoute.post("del", ":id", use: delProject)
+        
+        let showerRoute = conferencesRoute.grouped("sh")
+        showerRoute.post("prs", ":id", use: changePresentation)
+        showerRoute.post("stop", ":id", use: stopPresentation)
+        showerRoute.post("slide", ":id", use: changeSlide)
+        
         
     }
     
@@ -105,10 +136,10 @@ struct ConferenceController: RouteCollection {
         }
         var result = [Project.Public]()
         while let nextID = projectsIDMap[firstID]?.$nextProject.id {
-            result.append(Project.Public(id: firstID, frgnID: projectsIDMap[firstID]!.frgnID))
+            result.append(Project.Public(project: projectsIDMap[firstID]!))
             firstID = nextID
         }
-        result.append(Project.Public(id: firstID, frgnID: projectsIDMap[firstID]!.frgnID))
+        result.append(Project.Public(project: projectsIDMap[firstID]!))
         return result
     }
     
@@ -151,6 +182,33 @@ struct ConferenceController: RouteCollection {
                 }.flatMap { $0 }
             }
         }
+    }
+    
+    fileprivate func showerConf(req: Request) throws -> EventLoopFuture<View> {
+        let confStr = req.parameters.get("id")!
+        guard let confID = UUID(uuidString: confStr) else {
+            throw Abort.redirect(to: "/cf")
+        }
+        return req.view.render("shower")
+    }
+    
+    fileprivate func adminConf(req: Request) throws -> EventLoopFuture<View> {
+        guard let _ = req.auth.get(User.self) else {
+            throw Abort.redirect(to: "/login")
+        }
+        let confStr = req.parameters.get("id")!
+        guard let confID = UUID(uuidString: confStr) else {
+            throw Abort.redirect(to: "/cf")
+        }
+        return req.view.render("admin", ["confID" : confID])
+    }
+    
+    fileprivate func wsConf(req: Request, ws: WebSocket) {
+        let confStr = req.parameters.get("id")!
+        if let confID = UUID(uuidString: confStr) {
+            self.shower.addClient(confID: confID, ws: ws)
+        }
+        
     }
     
     fileprivate func titleChange(req: Request) throws -> EventLoopFuture<HTTPStatus> {
@@ -264,10 +322,10 @@ struct ConferenceController: RouteCollection {
                 return newProj.save(on: req.db).flatMapThrowing {
                     if let last = lastProjectOpt {
                         try last.$nextProject.id = newProj.requireID()
-                        return last.save(on: req.db).flatMapThrowing { Project.Public(id: try newProj.requireID(), frgnID: proj_id) }
+                        return last.save(on: req.db).flatMapThrowing { Project.Public(project: newProj) }
                     }
                     try section.$firstProject.id = newProj.requireID()
-                    return section.save(on: req.db).flatMapThrowing { Project.Public(id: try newProj.requireID(), frgnID: proj_id) }
+                    return section.save(on: req.db).flatMapThrowing { Project.Public(project: newProj) }
                 }
             }.flatMap { $0 }
             
@@ -299,5 +357,95 @@ struct ConferenceController: RouteCollection {
         }
     }
     
+    fileprivate func changePresentation(req: Request) throws -> EventLoopFuture<HTTPStatus> {
+        guard let _ = req.auth.get(User.self) else {
+            throw Abort.redirect(to: "/login")
+        }
+        let confStr = req.parameters.get("id")!
+        guard let confID = UUID(uuidString: confStr) else {
+            throw Abort(.badRequest)
+        }
+        let prID = try req.content.decode(ChangePresentation.self).newID
+        return Project.find(prID, on: req.db).unwrap(or: Abort(.notFound)).flatMapThrowing { project in
+            try self.shower.sendMessage(confID: confID,
+                                        message: ChangePresentationMessage(data:
+                                                                            ChangePresentationMessage.ChangePresentation(newID: project.frgnID)))
+            return Project.query(on: req.db).filter(\.$status == .active).all().flatMap { active in
+                return active.map { active_project in
+                    active_project.status = .done
+                    active_project.stoppedAt = Date.now
+                    return active_project.save(on: req.db)
+                }.flatten(on: req.eventLoop)
+            }.flatMap {
+                project.status = .active
+                project.startedAt = Date.now
+                project.stoppedAt = nil
+                return project.save(on: req.db)
+            }.map { .ok }
+        }.flatMap { $0 }
+        
+    }
+    
+    fileprivate func stopPresentation(req: Request) throws -> EventLoopFuture<HTTPStatus> {
+        guard let _ = req.auth.get(User.self) else {
+            throw Abort.redirect(to: "/login")
+        }
+        let confStr = req.parameters.get("id")!
+        guard let confID = UUID(uuidString: confStr) else {
+            throw Abort(.badRequest)
+        }
+        let prID = try req.content.decode(ChangePresentation.self).newID
+        return Project.find(prID, on: req.db).unwrap(or: Abort(.notFound)).flatMapThrowing { project in
+            try self.shower.sendMessage(confID: confID,
+                                        message: ChangePresentationMessage(data:
+                                                                            ChangePresentationMessage.ChangePresentation(newID: -1)))
+            return Project.query(on: req.db).filter(\.$status == .active).all().flatMap { active in
+                return active.map { active_project in
+                    active_project.status = .done
+                    active_project.stoppedAt = Date.now
+                    return active_project.save(on: req.db)
+                }.flatten(on: req.eventLoop)
+            }.map { .ok }
+        }.flatMap { $0 }
+        
+    }
+    
+    fileprivate func changeSlide(req: Request) throws -> HTTPStatus {
+        guard let _ = req.auth.get(User.self) else {
+            throw Abort.redirect(to: "/login")
+        }
+        let confStr = req.parameters.get("id")!
+        guard let confID = UUID(uuidString: confStr) else {
+            throw Abort(.badRequest)
+        }
+        let event = try req.content.decode(ChangeSlide.self)
+        try self.shower.sendMessage(confID: confID, message: ChangeSlideMessage(data: event))
+        return .ok
+    }
 }
 
+
+class ShowerStorage {
+    var wsStorage = [Conference.IDValue: [WebSocket]]()
+    let jsonEncoder = JSONEncoder()
+    init() {
+    }
+    
+    func addClient(confID: Conference.IDValue, ws: WebSocket) {
+        if self.wsStorage[confID] == nil {
+            self.wsStorage[confID] = [WebSocket]()
+        }
+        self.wsStorage[confID]?.append(ws)
+    }
+    
+    func sendMessage<T: Content>(confID: UUID, message: T) throws {
+        if let wss = wsStorage[confID] {
+            for ws in wss {
+                let messageData = try jsonEncoder.encode(message)
+                let messageJSON = String(data: messageData, encoding: .utf8) ?? "{}"
+                ws.send(messageJSON)
+            }
+        }
+    }
+    
+}

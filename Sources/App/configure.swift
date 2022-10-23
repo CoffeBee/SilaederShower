@@ -34,6 +34,8 @@ public func configure(_ app: Application) throws {
     app.migrations.add(CreateProject())
     app.sessions.use(.fluent)
     app.migrations.add(SessionRecord.migration)
+    app.migrations.add(AddStatusProject())
+    app.migrations.add(AddTimestampsProject())
     app.commands.use(AddUserCommand(), as: "add_user")
 
     // register routes
