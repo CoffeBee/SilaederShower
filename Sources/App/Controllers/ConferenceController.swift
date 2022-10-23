@@ -373,12 +373,12 @@ struct ConferenceController: RouteCollection {
             return Project.query(on: req.db).filter(\.$status == .active).all().flatMap { active in
                 return active.map { active_project in
                     active_project.status = .done
-                    active_project.stoppedAt = Date.now
+                    active_project.stoppedAt = Date()
                     return active_project.save(on: req.db)
                 }.flatten(on: req.eventLoop)
             }.flatMap {
                 project.status = .active
-                project.startedAt = Date.now
+                project.startedAt = Date()
                 project.stoppedAt = nil
                 return project.save(on: req.db)
             }.map { .ok }
@@ -402,7 +402,7 @@ struct ConferenceController: RouteCollection {
             return Project.query(on: req.db).filter(\.$status == .active).all().flatMap { active in
                 return active.map { active_project in
                     active_project.status = .done
-                    active_project.stoppedAt = Date.now
+                    active_project.stoppedAt = Date()
                     return active_project.save(on: req.db)
                 }.flatten(on: req.eventLoop)
             }.map { .ok }

@@ -34,7 +34,7 @@
       <h1>Ожидаем следующего докладчика</h1>
     </div>
     <canvas id="the-canvas"></canvas>
-    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.14.305/build/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
     <script>
       var loadingTask = null
         var ppdf = null;
@@ -105,33 +105,7 @@
           if (video_slides.includes(nowPage)) {
             window.open(`http://192.168.0.187:1617/video/${video_links[nowPage]}`, '_blank').focus();
           }
-          ppdf.getPage(nowPage).then(function(page) {
-            var scale = Math.min(window.innerWidth / page.getViewport({
-              scale: 1.0
-            }).width, window.innerHeight / page.getViewport({
-              scale: 1.0
-            }).height)
-            var viewport = page.getViewport({
-              scale: scale
-            });
-            // Support HiDPI-screens.
-            var outputScale = window.devicePixelRatio || 1;
-            var canvas = document.getElementById('the-canvas');
-            var context = canvas.getContext('2d');
-            canvas.width = Math.floor(viewport.width * outputScale);
-            canvas.height = Math.floor(viewport.height * outputScale);
-            canvas.style.width = Math.floor(viewport.width) + "px";
-            canvas.style.height = Math.floor(viewport.height) + "px";
-            var transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
-            var renderContext = {
-              canvasContext: context,
-              transform: transform,
-              viewport: viewport
-            };
-            page.render(renderContext);
-          });
-        }
-
+	}
         function prev() {
           if (nowPage === 1) {
             return;
@@ -235,7 +209,8 @@
               transform: transform,
               viewport: viewport
             };
-            page.render(renderContext);
+            
+		  setTimeout(() => {page.render(renderContext)}, 200);
           });
         }
         
