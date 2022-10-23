@@ -3,7 +3,7 @@
 
 
 body{
-	background: #f3f2f7;
+	background: #ECEBF0;
 	margin: 0px;
 }
 
@@ -20,7 +20,6 @@ body{
   	background: #f7f7fa;
   	border-radius: 10px;
   	transition: 1s;
-  	border: 2px solid white;
   	overflow: hidden;
   	/*border: 1px;*/
   	/*margin-left: 10px;*/
@@ -148,5 +147,9 @@ body{
 	padding: 15px 25px;
 	background: #FFF;
 	border-radius: 25px;
+}
+
+.bhover {
+	border: solid 2px #E2E1E5;
 }
 

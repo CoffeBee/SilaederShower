@@ -60,8 +60,10 @@
                border-radius: 0;
             margin-bottom: 0px;;width: auto; background: transparent" @blur="sendDetail" contenteditable>{{detail}}</span>
          </span>
-         <img src="/images/start.svg" style="margin-left: 35px; height: 80px; width: 80px;">
-         <img src="/images/peoples.svg" style="margin-left: 35px; height: 80px; height: 80px">
+         <div style="position: absolute; right: 30px;">
+            <img @mouseover="start_hover = true" @mouseleave="start_hover = false" :class="{bhover: start_hover == true}" src="/images/start.svg" style=" background: white; padding: 17.5px; border-radius: 18px; box-sizing: border-box; height: 70px; width: 70px;">
+         <img @mouseover="people_hover = true" @mouseleave="people_hover = false" :class="{bhover: people_hover == true}" src="/images/peoples.svg" style="margin-left: 25px; background: white; border-radius: 18px;  padding: 17.5px; box-sizing: border-box;  height: 70px; height: 70px">
+         </div>
       </div>
 
       <div id="plan">
@@ -81,27 +83,29 @@
             margin-bottom: 0px;;width: auto; background: transparent" @blur="sendName(index, $event)" contenteditable>{{section.name}}</span>
             </div>
             <div class="projects">
-               <div style="max-height: calc(100vh - 226px - 200px);position: relative;overflow-y: scroll;display: flex;
+               <div :id="section.id" style="max-height: calc(100vh - 226px - 200px);position: relative;overflow-y: scroll;display: flex;
    flex-direction: column;
    margin-bottom: 20px;">
-                  <div class="project" style="margin-bottom: 30px;" v-for="(project, pr_id) in section.projects">
+                  <div class="project"  @mouseover="project.hover = true" @mouseleave="project.hover = false" style="margin-bottom: 30px;" v-for="(project, pr_id) in section.projects">
                         <div style="position: relative;">
-                           <p style="margin: 0; margin-left: -5px; display: inline-block; border-radius: 15px; padding: 8px 16px; background: rgba(255, 187, 84, 0.15);font-family: 'Raleway';font-style: normal;font-weight: 500;font-size: 16px;letter-spacing: 0.4px;color: #FFBB54;">{{project.data.presentation.teacher}}</p>
+                           <p style="margin: 0; margin-left: -5px; display: inline-block; border-radius: 15px; padding: 8px 16px; background: rgba(255, 161, 38, 0.15);font-family: 'Raleway';font-style: normal;font-weight: 500;font-size: 16px;letter-spacing: 0.4px;color: #FFA126;">{{project.data.presentation.teacher}}</p>
                         <p style="margin: 0; margin-top:  15px; font-family: 'Raleway'; font-weight: 500; font-size: 18px; color: #464255">{{project.data.name}}</p>
                         <p style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE">est 10:00-10:05 </p>
-                        <img @click="removeProject(project.id, index, pr_id)" src="/images/del.svg" style="position: absolute; top: 5px; right: 0px;" />
+                        <Transition>
+                        <img v-if="project.hover === true" @click="removeProject(project.id, index, pr_id)" src="/images/del.svg" style="position: absolute; top: 5px; right: 0px; width: 10px; height: 10px;" />
                         </div>
+                     </Transition>
                      </div>
                </div>
-               <div style="width: 270px; height: 120px; background: #ECEAF3; border-radius: 25px;padding: 15px;" @mouseover="section.hover = true" @mouseleave="section.hover = false;" >
+               <div style="width: 270px; min-height: 120px; background: #E2E1E5; border-radius: 25px;padding: 15px;" @mouseover="section.hover = true" @mouseleave="section.hover = false;" >
 
                      <div >
                         <Transition>
-                        <input v-if="section.hover == true" v-model="section.search" @keyup="searchProject(index)" class="new-project" placeholder="Новый проект"  />
+                        <input v-if="section.hover == true" v-model="section.search" @keyup="searchProject(index, section.id)" class="new-project" placeholder="Новый проект"  />
                         </Transition>
                         <Transition>
-                        <div v-if="section.hover == true && section.results.length > 0" style="padding: 12px 25px; width: 210px;; border-radius: 25px; margin-top: 15px; background: #FFF;">
-                           <p v-for="(res, res_i) in section.results" style="margin: 0; font-family: 'Raleway'; font-size: 12; font-weight: 400; color: #464255" @click="addProject(index, res.id, $event)">{{res.name}}</p>
+                        <div v-if="section.hover == true && section.results.length > 0" style="padding: 12px 25px; width: 210px;; border-radius: 25px; margin-top: 15px; background: #FFF;display: flex; flex-direction: column; gap: 10px">
+                           <p v-for="(res, res_i) in section.results" style="margin: 0; font-family: 'Raleway'; font-size: 12; font-weight: 400; color: #464255" @click="addProject(index, res.id, section.id, $event)">{{res.name}}</p>
                         </div>
                         </Transition>
                      </div>
@@ -115,6 +119,7 @@
    openNav();
    </script>
 </body>
+
 <script>
 
 const {createApp} = Vue
@@ -125,6 +130,8 @@ createApp({
          detail: '#(detail)',
          confID: '#(confID)',
          sections: [],
+         start_hover: false,
+         people_hover: false
       }
    },
    mounted() {
@@ -214,13 +221,17 @@ createApp({
         method: 'get',
         url: 'http://api.conference.silaeder.ru/project?q=' + this.sections[index].search,
       }).then( (response) => {
-       this.sections[index].results = response.data
+       if (response.data.length > 5) {
+         this.sections[index].results = []
+       } else {
+         this.sections[index].results = response.data
+       }
      })
      .catch(function (error) {
        console.log(error);
      });
     },
-    addProject(sec_index, proj_id, e) {
+    addProject(sec_index, proj_id, sectionID, e) {
       axios({
         method: 'post',
         url: '/cf/sc/project/' + this.sections[sec_index].id,
@@ -234,7 +245,11 @@ createApp({
                  url: 'http://api.conference.silaeder.ru/project/' + new_proj.frgnID,
                }).then( (responsee) => {
                   new_proj.data = responsee.data
-                this.sections[sec_index].projects.push(new_proj) 
+                  this.sections[sec_index].projects.push(new_proj)
+                  setTimeout(() => {
+                     var all_projects = document.getElementById(sectionID);
+                  all_projects.scrollTop += 500;
+               }, 100)
               })
               .catch(function (error) {
                 console.log(error);
