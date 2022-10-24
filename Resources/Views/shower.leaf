@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <title>Shower page</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   </head>
   <body id="bdd">
     <style>
@@ -32,57 +33,128 @@
     <div id="wait" style="display: none">
       <h1>Ожидаем следующего докладчика</h1>
     </div>
-    <canvas id="the-canvas"></canvas>
+    <canvas style="opacity: 0;" id="the-canvas"></canvas>
     <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
     <script>
+      var canvas = document.getElementById('the-canvas');
+      var ctx = canvas.getContext('2d');
+      function fullscreen() {
+        var el = document.getElementById('the-canvas');
+        if (el.webkitRequestFullScreen) {
+          el.webkitRequestFullScreen();
+        } else {
+          el.mozRequestFullScreen();
+        }
+      }
+      function drawPage(index) {
+          index -= 1;
+          var img = new Image;
+          img.onload = function() {
+              /* this will draw the image loaded onto canvas at position 0,0
+                 at the optional width and height of the canvas.
+                 'this' is current image loaded 
+              */
+              canvas.style.opacity = "1";
+              ctx.drawImage(this, 0, 0, ctx.canvas.width, ctx.canvas.height);
+          }
+          img.src = pages[index];  // start loading the data-uri as source
+      }
+      canvas.addEventListener("click", fullscreen)
       var loadingTask = null
         var ppdf = null;
         var nowPage = 1;
+        var pages = [];
       function load_pres(url) {
         loadingTask = pdfjsLib.getDocument(url);
         ppdf = null;
         nowPage = 1;
+        pages = [];
         loadingTask.promise.then(function(pdf) {
           ppdf = pdf;
-          for (var i = 1; i <= ppdf.numPages; i += 1) {
-            pdf.getPage(nowPage).then(function(page) {});
+          canvas.style.opacity = "0";
+          function done() {
+              drawPage(1);
           }
-          pdf.getPage(nowPage).then(function(page) {
-            var scale = Math.min(window.innerWidth / page.getViewport({
-              scale: 1.0
-            }).width, window.innerHeight / page.getViewport({
-              scale: 1.0
-            }).height)
-            var viewport = page.getViewport({
-              scale: scale
-            });
-            // Support HiDPI-screens.
-            var outputScale = window.devicePixelRatio || 1;
-            var canvas = document.getElementById('the-canvas');
-            var context = canvas.getContext('2d');
-            canvas.width = Math.floor(viewport.width * outputScale);
-            canvas.height = Math.floor(viewport.height * outputScale);
-            canvas.style.width = Math.floor(viewport.width) + "px";
-            canvas.style.height = Math.floor(viewport.height) + "px";
-            var transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
-            var renderContext = {
-              canvasContext: context,
-              transform: transform,
-              viewport: viewport
-            };
-            page.render(renderContext);
+          function iterate(pdf) {
+              var currentPage = 1
+              // init parsing of first page
+              if (currentPage <= pdf.numPages) getPage();
 
-            function fullscreen() {
-              var el = document.getElementById('the-canvas');
-              if (el.webkitRequestFullScreen) {
-                el.webkitRequestFullScreen();
-              } else {
-                el.mozRequestFullScreen();
+              // main entry point/function for loop
+              function getPage() {
+
+                  // when promise is returned do as usual
+                  pdf.getPage(currentPage).then(function(page) {
+
+                      var scale = Math.min(window.innerWidth / page.getViewport({
+                        scale: 1.0
+                      }).width, window.innerHeight / page.getViewport({
+                        scale: 1.0
+                      }).height)
+                      var viewport = page.getViewport({
+                        scale: scale
+                      });
+                      // Support HiDPI-screens.
+                      var outputScale = window.devicePixelRatio || 1;
+                      var canvas = document.getElementById('the-canvas');
+                      var context = canvas.getContext('2d');
+                      canvas.width = Math.floor(viewport.width * outputScale);
+                      canvas.height = Math.floor(viewport.height * outputScale);
+                      canvas.style.width = Math.floor(viewport.width) + "px";
+                      canvas.style.height = Math.floor(viewport.height) + "px";
+                      var transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+                      var renderContext = {
+                        canvasContext: context,
+                        transform: transform,
+                        viewport: viewport
+                      };
+
+                      // now, tap into the returned promise from render:
+                      page.render(renderContext).promise.then(function() {
+
+                          // store compressed image data in array
+                          pages.push(canvas.toDataURL());
+
+                          if (currentPage < pdf.numPages) {
+                              currentPage++;
+                              getPage();        // get next page
+                          }
+                          else {
+                              done();           // call done() when all pages are parsed
+                          }
+                      });
+                  });
               }
-            }
-            canvas.addEventListener("click", fullscreen)
-          });
+
+          }
+
+          iterate(ppdf)
+
         });
+
+        function next() {
+          
+  }
+        function prev() {
+          
+          
+        }
+        document.onkeydown = checkKey;
+
+        function checkKey(e) {
+          e = e || window.event;
+          if (e.keyCode == '38' || e.keyCode === 33) {
+            prev();
+            // up arrow
+          } else if (e.keyCode == '40' || e.keyCode === 34) {
+            next();
+            // down arrow
+          } else if (e.keyCode == '37') {
+            prev();
+          } else if (e.keyCode == '39') {
+            next();
+          }
+        }
       }
       var socket = new WebSocket(`ws://${(window.location.host + window.location.pathname).replace('view', 'ws')}`);
       socket.onopen = function() {};
@@ -91,14 +163,13 @@
       socket.onmessage = function(event) {
         const msg = JSON.parse(event.data);
         if (msg.type == "presentation") {
-
           var id = msg.data.newID
           if (id == -1) {
             document.getElementById("wait").style.display = "flex"
             document.getElementById("the-canvas").style.display = "none"
           } else {
             document.getElementById("wait").style.display = "none"
-            document.getElementById("the-canvas").style.display = "flex"
+            document.getElementById("the-canvas").style.display = "block"
           }
           var url = "http://api.conference.silaeder.ru/project/";
           var http = new XMLHttpRequest();
@@ -129,31 +200,7 @@
           if (video_slides.includes(nowPage)) {
             window.open(`/video/${video_links[nowPage]}`, '_blank').focus();
           }
-          ppdf.getPage(nowPage).then(function(page) {
-            var scale = Math.min(window.innerWidth / page.getViewport({
-              scale: 1.0
-            }).width, window.innerHeight / page.getViewport({
-              scale: 1.0
-            }).height)
-            var viewport = page.getViewport({
-              scale: scale
-            });
-            // Support HiDPI-screens.
-            var outputScale = window.devicePixelRatio || 1;
-            var canvas = document.getElementById('the-canvas');
-            var context = canvas.getContext('2d');
-            canvas.width = Math.floor(viewport.width * outputScale);
-            canvas.height = Math.floor(viewport.height * outputScale);
-            canvas.style.width = Math.floor(viewport.width) + "px";
-            canvas.style.height = Math.floor(viewport.height) + "px";
-            var transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
-            var renderContext = {
-              canvasContext: context,
-              transform: transform,
-              viewport: viewport
-            };
-            page.render(renderContext);
-          });
+          drawPage(nowPage)
         }
         
       };
