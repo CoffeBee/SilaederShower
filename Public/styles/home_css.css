@@ -43,6 +43,12 @@ body{
 	}
 }
 
+@media all and (min-width: 981px) {
+.gue {
+	display: none;
+}
+}
+
 .plus{
 	height: 19px;
 	width: 19px;
