@@ -33,11 +33,15 @@
     <div id="wait" style="display: none">
       <h1>Ожидаем следующего докладчика</h1>
     </div>
-    <canvas style="opacity: 0;" id="the-canvas"></canvas>
+        <canvas id="the-canvas" style="opacity: 0; position: absolute; left: 0; top:0"></canvas>
+
+    <canvas style="position: absolute; left:0; top:0" id="the-canvass"></canvas>
     <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
     <script>
       var canvas = document.getElementById('the-canvas');
+      var canvass = document.getElementById('the-canvass');
       var ctx = canvas.getContext('2d');
+      var ctxx = canvass.getContext('2d');
       function fullscreen() {
         var el = document.getElementById('the-canvas');
         if (el.webkitRequestFullScreen) {
@@ -47,6 +51,10 @@
         }
       }
       function drawPage(index) {
+          if (index > pages.length) {
+            setTimeout(function() {drawPage(index)}, 200);
+            return;
+          }
           index -= 1;
           var img = new Image;
           img.onload = function() {
@@ -54,12 +62,11 @@
                  at the optional width and height of the canvas.
                  'this' is current image loaded 
               */
-              canvas.style.opacity = "1";
-              ctx.drawImage(this, 0, 0, ctx.canvas.width, ctx.canvas.height);
+              ctxx.drawImage(this, 0, 0, ctx.canvas.width, ctx.canvas.height);
           }
           img.src = pages[index];  // start loading the data-uri as source
       }
-      canvas.addEventListener("click", fullscreen)
+      canvass.addEventListener("click", fullscreen)
       var loadingTask = null
         var ppdf = null;
         var nowPage = 1;
@@ -72,9 +79,6 @@
         loadingTask.promise.then(function(pdf) {
           ppdf = pdf;
           canvas.style.opacity = "0";
-          function done() {
-              drawPage(1);
-          }
           function iterate(pdf) {
               var currentPage = 1
               // init parsing of first page
@@ -102,6 +106,14 @@
                       canvas.height = Math.floor(viewport.height * outputScale);
                       canvas.style.width = Math.floor(viewport.width) + "px";
                       canvas.style.height = Math.floor(viewport.height) + "px";
+
+                      if (currentPage == 1) {
+                        canvass.width = Math.floor(viewport.width * outputScale);
+                        canvass.height = Math.floor(viewport.height * outputScale);
+                        canvass.style.width = Math.floor(viewport.width) + "px";
+                        canvass.style.height = Math.floor(viewport.height) + "px";
+                      }
+
                       var transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
                       var renderContext = {
                         canvasContext: context,
@@ -114,13 +126,14 @@
 
                           // store compressed image data in array
                           pages.push(canvas.toDataURL());
-
+                          if (currentPage == 1) {
+                            drawPage(1);
+                          }
                           if (currentPage < pdf.numPages) {
                               currentPage++;
                               getPage();        // get next page
                           }
                           else {
-                              done();           // call done() when all pages are parsed
                           }
                       });
                   });
@@ -129,6 +142,7 @@
           }
 
           iterate(ppdf)
+          drawPage(1);
 
         });
 
