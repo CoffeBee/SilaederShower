@@ -187,54 +187,61 @@
           }
         }
       }
-      var socket = new WebSocket(`ws://${(window.location.host + window.location.pathname).replace('admin', 'ws')}`);
-      socket.onopen = function() {};
-      var video_slides = [];
-      var video_links = {};
-      socket.onmessage = function(event) {
-        const msg = JSON.parse(event.data);
-        if (msg.type == "presentation") {
-          var id = msg.data.newID
-          if (id == -1) {
-            document.getElementById("wait").style.display = "flex"
-            document.getElementById("the-canvas").style.display = "none"
-          } else {
-            document.getElementById("wait").style.display = "none"
-            document.getElementById("the-canvas").style.display = "block"
-          }
-          var url = "http://api.conference.silaeder.ru/project/";
-          var http = new XMLHttpRequest();
-          http.open("GET", url + id, true);
-          http.onload = function() {
-            if (http.readyState === http.DONE) {
-              if (http.status === 200) {
-                // console.log(http.response);
-                console.log(id);
-                console.log(http.responseText);
-                var response = http.responseText;
-                var jsonObject = JSON.parse(response);
-                load_pres(jsonObject.presentation.pdf);
-                video_slides = [];
-                video_links = {};
-                nowPage = 1;
-                for (var video of jsonObject.presentation.videos) {
-                  video_slides.push(parseInt(video.after_slide));
-                  video_links[parseInt(video.after_slide)] = video.YT;
+      function openSocket() {
+        var socket = new WebSocket(`ws://${(window.location.host + window.location.pathname).replace('admin', 'ws')}`);
+        socket.onopen = function() {};
+        var video_slides = [];
+        var video_links = {};
+        socket.onmessage = function(event) {
+          const msg = JSON.parse(event.data);
+          if (msg.type == "presentation") {
+            var id = msg.data.newID
+            if (id == -1) {
+              document.getElementById("wait").style.display = "flex"
+              document.getElementById("the-canvas").style.display = "none"
+            } else {
+              document.getElementById("wait").style.display = "none"
+              document.getElementById("the-canvas").style.display = "block"
+            }
+            var url = "http://api.conference.silaeder.ru/project/";
+            var http = new XMLHttpRequest();
+            http.open("GET", url + id, true);
+            http.onload = function() {
+              if (http.readyState === http.DONE) {
+                if (http.status === 200) {
+                  // console.log(http.response);
+                  console.log(id);
+                  console.log(http.responseText);
+                  var response = http.responseText;
+                  var jsonObject = JSON.parse(response);
+                  load_pres(jsonObject.presentation.pdf);
+                  video_slides = [];
+                  video_links = {};
+                  nowPage = 1;
+                  for (var video of jsonObject.presentation.videos) {
+                    video_slides.push(parseInt(video.after_slide));
+                    video_links[parseInt(video.after_slide)] = video.YT;
+                  }
                 }
               }
+            };
+            http.send(null);
+          } else {
+            let slide = msg.data.slide;
+            nowPage = slide
+            if (video_slides.includes(nowPage)) {
+              window.open(`/video/${video_links[nowPage]}`, '_blank').focus();
             }
-          };
-          http.send(null);
-        } else {
-          let slide = msg.data.slide;
-          nowPage = slide
-          if (video_slides.includes(nowPage)) {
-            window.open(`/video/${video_links[nowPage]}`, '_blank').focus();
+            drawPage(nowPage)
           }
-          drawPage(nowPage)
-        }
-        
-      };
+          
+        };
+        socket.onclose = function(event) {
+          setTimeout(openSocket, 1000);
+        };
+      }
+      openSocket()
+      
     </script>
   </body>
 </html>
