@@ -120,8 +120,12 @@
                             <div style="padding-top: 15px; padding-bottom: 15px;">
                                 <div class="rec_nw" style="width: 270px; min-height: 44px; background: #E2E1E5; border-radius: 25px;padding: 15px;" v-if="project.hover_add == true">
                                       <input v-model="section.search" @keyup="searchProject(index, section.id)" class="new-project" placeholder="Новый проект"  />
-                                        <div v-if="section.results.length > 0" style="padding: 12px 25px; width: 210px;; border-radius: 25px; margin-top: 10px; background: #FFF;display: flex; flex-direction: column; gap: 10px">
-                                            <p v-for="(res, res_i) in section.results" style="margin: 0; font-family: 'Raleway'; font-size: 12; font-weight: 400; color: #464255" @click="addProject(index, res.id, section.id, project.id, pr_id, $event)">{{res.name}}</p>
+                                        <div v-if="section.results.length > 0 || section.from_dir.length !== 0" style="padding: 12px 25px; width: 210px;; border-radius: 25px; margin-top: 10px; background: #FFF;display: flex; flex-direction: column; gap: 10px">
+                                            <p v-if="section.from_dir.length !== 0" style="margin: 0; font-family: 'Raleway'; font-size: 12; font-weight: 700; color: #464255"  @click="addProjects(index, section.id, project.id, pr_id, 0, $event)">>Все из: {{section.direction}}</p>
+                                            <div v-if="section.results.length > 0">
+                                                <p v-for="(res, res_i) in section.results" style="margin: 0; font-family: 'Raleway'; font-size: 12; font-weight: 400; color: #464255" @click="addProject(index, res.id, section.id, project.id, pr_id, $event)">{{res.name}}</p>
+                                            </div>
+                                            
                                         </div>
                                    
                                 </div>
@@ -152,7 +156,8 @@ createApp({
          sections: [],
          start_hover: false,
          people_hover: false,
-         hovered: null
+         hovered: null,
+         all_ids: []
       }
    },
    mounted() {
@@ -167,12 +172,14 @@ createApp({
        this.sections = response.data
        this.sections.forEach( (section, sec_i) => {
         this.sections[sec_i].results = [];
+        this.sections[sec_i].from_dir = [];
          this.sections[sec_i].projects.forEach( (proj, proj_i) => {
 
             axios({
                  method: 'get',
                  url: 'http://api.conference.silaeder.ru/project/' + this.sections[sec_i].projects[proj_i].frgnID,
                }).then( (response) => {
+                this.all_ids.push(this.sections[sec_i].projects[proj_i].frgnID);
                 this.sections[sec_i].projects[proj_i].data = response.data
                 if (this.sections[sec_i].projects[proj_i].status == "done") {
                   let stop = this.sections[sec_i].projects[proj_i].stoppedAt 
@@ -236,6 +243,7 @@ createApp({
       }).then( (response) => {
        this.sections.push(response.data)
        this.sections[this.sections.length - 1].results = [];
+       this.sections[this.sections.length - 1].from_dir = [];
      })
      .catch(function (error) {
        console.log(error);
@@ -261,17 +269,36 @@ createApp({
         method: 'get',
         url: 'http://api.conference.silaeder.ru/project?q=' + this.sections[index].search,
       }).then( (response) => {
-       if (response.data.length > 5) {
+        let resp = response.data.filter((x) => { return !this.all_ids.includes(x.id) })
+       if (resp> 5) {
          this.sections[index].results = []
        } else {
-         this.sections[index].results = response.data
+         this.sections[index].results = resp
        }
      })
      .catch(function (error) {
        console.log(error);
      });
+
+     axios({
+        method: 'get',
+        url: 'http://api.conference.silaeder.ru/project?s=' + this.sections[index].search.toLowerCase(),
+      }).then( (response) => {
+       if (response.data.length != 0) {
+        this.sections[index].direction = response.data[0].direction;
+        this.sections[index].from_dir = response.data;
+       } else {
+        this.sections[index].from_dir = [];
+        this.sections[index].direction = null;
+       }
+     })
+     .catch(function (error) {
+       console.log(error);
+     });
+
     },
     addProject(sec_index, proj_id, sectionID, after, new_i, e) {
+         this.all_ids.push(proj_id);
       axios({
         method: 'post',
         url: '/cf/sc/project/' + this.sections[sec_index].id,
@@ -292,6 +319,47 @@ createApp({
                   this.sections[sec_index].projects[proj_i].restUpdater = setInterval(() => {
                       this.updateRests(sec_index, proj_i)
                      }, 1000)
+                  this.searchProject(sec_index);
+                  
+              })
+              .catch(function (error) {
+                console.log(error);
+              });
+     })
+     .catch(function (error) {
+       console.log(error);
+     });
+    },
+    addProjects(sec_index, sectionID, after, new_i, l_i, e) {
+        if (l_i == this.sections[sec_index].from_dir.length) {
+            return;
+        }
+        let proj_id = this.sections[sec_index].from_dir[l_i].id;
+        if (this.all_ids.includes(proj_id)) {
+            this.addProjects(sec_index, sectionID, after, new_i, l_i + 1, e);
+            return;
+        }
+      axios({
+        method: 'post',
+        url: '/cf/sc/project/' + this.sections[sec_index].id,
+        data: {
+          id: proj_id,
+          after: after
+        }
+      }).then((response) => {
+         var new_proj = response.data
+       axios({
+                 method: 'get',
+                 url: 'http://api.conference.silaeder.ru/project/' + new_proj.frgnID,
+               }).then( (responsee) => {
+                  new_proj.data
+                  new_proj.data = responsee.data
+                   this.sections[sec_index].projects.splice(new_i + 1, 0, new_proj);
+                  let proj_i = new_i + 1
+                  this.sections[sec_index].projects[proj_i].restUpdater = setInterval(() => {
+                      this.updateRests(sec_index, proj_i)
+                     }, 1000)
+                  this.addProjects(sec_index, sectionID, after, new_i, l_i + 1, e)
                   
               })
               .catch(function (error) {
@@ -303,6 +371,10 @@ createApp({
      });
     },
     removeProject(pr_id, sec_i, pr_i) {
+        var index = this.all_ids.indexOf(this.sections[sec_i].projects[pr_i].frgnID);
+        if (index !== -1) {
+          this.all_ids.splice(index, 1);
+        }
       this.sections[sec_i].projects.splice(pr_i, 1);
       axios({
         method: 'post',
