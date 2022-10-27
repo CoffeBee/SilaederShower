@@ -71,7 +71,7 @@
       <div id="plan">
          <img src="/images/add.svg" v-if="sections.length === 0" @click="sectionAdd"/>
          <div class="section" v-for="(section, index) in sections">
-            <div class="sec_he" style="height: 60px; margin-bottom: 20px"> 
+            <div class="sec_he" style="margin-bottom: 0"> 
                <div style="display: flex; justify-content: space-between;" v-if="index == sections.length - 1">
                   <span style="font-family: Raleway; font-weight: 500; font-size: 21px;border: none;
                outline: none; display: block;
@@ -79,46 +79,58 @@
             margin-bottom: 0px;;width: auto; background: transparent" @blur="sendName(index, $event)" contenteditable>{{section.name}}</span>
                   <img src="/images/add.svg" @click="sectionAdd"/>
                </div>
-               <span v-if="index != sections.length - 1" style="font-family: Raleway; font-weight: 500; font-size: 21px;border: none;
+                    <span v-if="index != sections.length - 1" style="font-family: Raleway; font-weight: 500; font-size: 21px;border: none;
                outline: none; display: block;
                border-radius: 0; color:  #464255;
             margin-bottom: 0px;;width: auto; background: transparent" @blur="sendName(index, $event)" contenteditable>{{section.name}}</span>
             </div>
-            <div class="projects">
-               <div :id="section.id" style="max-height: calc(100vh - 226px - 200px);position: relative;overflow-y: scroll;display: flex;
+            <div @mouseover="showAdd(index, -1)"  @mouseleave="hideAdd(index, -1)"  style="min-height: 30px; min-width: 310px">
+                <div style="padding-top: 15px; padding-bottom: 15px;">
+                    <div class="rec_nw" style="width: 270px; min-height: 44px; background: #E2E1E5; border-radius: 25px;padding: 15px;" v-if="section.hover_add == true">
+                          <input v-model="section.search" @keyup="searchProject(index, section.id)" class="new-project" placeholder="Новый проект"  />
+                            <div v-if="section.results.length > 0" style="padding: 12px 25px; width: 210px;; border-radius: 25px; margin-top: 10px; background: #FFF;display: flex; flex-direction: column; gap: 10px">
+                                <p v-for="(res, res_i) in section.results" style="margin: 0; font-family: 'Raleway'; font-size: 12; font-weight: 400; color: #464255" @click="addProject(index, res.id, section.id, null, -1, $event)">{{res.name}}</p>
+                            </div>
+                       
+                    </div>
+                </div>
+            </div>
+            <div class="projects" style="margin-bottom: 80px">
+               <div :id="section.id" style="position: relative;overflow-y: scroll;display: flex;
    flex-direction: column;
    margin-bottom: 20px;">
-                  <div class="project" :class="{active: project.status == 'active', done: project.status == 'done'}"  @dblclick="startPres(project.id, index, pr_id)" @mouseover="project.hover = true" @mouseleave="project.hover = false" style="margin-bottom: 30px;" v-for="(project, pr_id) in section.projects">
-                        <div style="position: relative;">
-                           <p class="comp" style="margin: 0; margin-left: -5px; display: inline-block; border-radius: 15px; padding: 8px 16px; background: rgba(255, 161, 38, 0.15);font-family: 'Raleway';font-style: normal;font-weight: 500;font-size: 16px;letter-spacing: 0.4px;color: #FFA126;">{{project.data.presentation.teacher}}</p>
-                        <p class="title" style="margin: 0; margin-top:  15px; font-family: 'Raleway'; font-weight: 500; font-size: 18px; color: #464255">{{project.data.name}}</p>
-                        <p class="time" v-if="project.status == 'none'" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE">est 10:00-10:05 </p>
-                        <p class="time" v-if="project.status == 'done'" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE"> {{project.timeStr}}</p>
-                        <p class="time" v-if="project.status == 'active' &&  project.rest > 0" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE">Осталось {{ project.restStr }}</p>
-                         <p class="time" v-if="project.status == 'active' &&  project.rest <= 0" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #FF5B5B">Время вышло</p>
+                    <div v-for="(project, pr_id) in section.projects">
+                        <div  class="project" :class="{active: project.status == 'active', done: project.status == 'done'}"  @dblclick="startPres(project.id, index, pr_id)" @mouseover="project.hover = true" @mouseleave="project.hover = false">
+                            <div style="position: relative;">
+                               <p class="comp" style="margin: 0; margin-left: -5px; display: inline-block; border-radius: 15px; padding: 8px 16px; background: rgba(255, 161, 38, 0.15);font-family: 'Raleway';font-style: normal;font-weight: 500;font-size: 16px;letter-spacing: 0.4px;color: #FFA126;">{{project.data.teacher}}</p>
+                                <p class="title" style="margin: 0; margin-top:  15px; font-family: 'Raleway'; font-weight: 500; font-size: 18px; color: #464255">{{project.data.name}}</p>
+                                <p class="time" v-if="project.status == 'none'" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE">est 10:00-10:05 </p>
+                                <p class="time" v-if="project.status == 'done'" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE"> {{project.timeStr}}</p>
+                                <p class="time" v-if="project.status == 'active' &&  project.rest > 0" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE">Осталось {{ project.restStr }}</p>
+                                <p class="time" v-if="project.status == 'active' &&  project.rest <= 0" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #FF5B5B">Время вышло</p>
 
-                        <p class="end stop" @click="stopPres(project.id, index, pr_id)" v-if="project.status == 'active'">Завершить</p>
-                        
-                        <Transition>
-                        <img v-if="project.hover === true" @click="removeProject(project.id, index, pr_id)" src="/images/del.svg" style="position: absolute; top: 5px; right: 0px; width: 10px; height: 10px;" />
+                                <p class="end stop" @click="stopPres(project.id, index, pr_id)" v-if="project.status == 'active'">Завершить</p>
+                            
+                                <Transition>
+                                    <img v-if="project.hover === true" @click="removeProject(project.id, index, pr_id)" src="/images/del.svg" style="position: absolute; top: 5px; right: 0px; width: 10px; height: 10px;" />
+                                </Transition>
+                            </div>
                         </div>
-                     </Transition>
-                     </div>
-               </div>
-               <div class="rec_nw" style="width: 270px; min-height: 120px; background: #E2E1E5; border-radius: 25px;padding: 15px;" @mouseover="section.hover = true" @mouseleave="section.hover = false;" >
+                        <div @mouseover="showAdd(index, pr_id)"  @mouseleave="hideAdd(index, pr_id)"  style="min-height: 30px; min-width: 310px">
+                            <div style="padding-top: 15px; padding-bottom: 15px;">
+                                <div class="rec_nw" style="width: 270px; min-height: 44px; background: #E2E1E5; border-radius: 25px;padding: 15px;" v-if="project.hover_add == true">
+                                      <input v-model="section.search" @keyup="searchProject(index, section.id)" class="new-project" placeholder="Новый проект"  />
+                                        <div v-if="section.results.length > 0" style="padding: 12px 25px; width: 210px;; border-radius: 25px; margin-top: 10px; background: #FFF;display: flex; flex-direction: column; gap: 10px">
+                                            <p v-for="(res, res_i) in section.results" style="margin: 0; font-family: 'Raleway'; font-size: 12; font-weight: 400; color: #464255" @click="addProject(index, res.id, section.id, project.id, pr_id, $event)">{{res.name}}</p>
+                                        </div>
+                                   
+                                </div>
+                            </div>
+                        </div>
 
-                     <div >
-                        <Transition>
-                        <input v-if="section.hover == true" v-model="section.search" @keyup="searchProject(index, section.id)" class="new-project" placeholder="Новый проект"  />
-                        </Transition>
-                        <Transition>
-                        <div v-if="section.hover == true && section.results.length > 0" style="padding: 12px 25px; width: 210px;; border-radius: 25px; margin-top: 15px; background: #FFF;display: flex; flex-direction: column; gap: 10px">
-                           <p v-for="(res, res_i) in section.results" style="margin: 0; font-family: 'Raleway'; font-size: 12; font-weight: 400; color: #464255" @click="addProject(index, res.id, section.id, $event)">{{res.name}}</p>
-                        </div>
-                        </Transition>
-                     </div>
-                  
-               </div>
+                    </div>
+
+               
             </div>
          </div>
       </div>
@@ -139,7 +151,8 @@ createApp({
          confID: '#(confID)',
          sections: [],
          start_hover: false,
-         people_hover: false
+         people_hover: false,
+         hovered: null
       }
    },
    mounted() {
@@ -153,6 +166,7 @@ createApp({
       }).then((response) => {
        this.sections = response.data
        this.sections.forEach( (section, sec_i) => {
+        this.sections[sec_i].results = [];
          this.sections[sec_i].projects.forEach( (proj, proj_i) => {
 
             axios({
@@ -221,6 +235,7 @@ createApp({
         url: '/cf/section/' + this.confID
       }).then( (response) => {
        this.sections.push(response.data)
+       this.sections[this.sections.length - 1].results = [];
      })
      .catch(function (error) {
        console.log(error);
@@ -256,12 +271,13 @@ createApp({
        console.log(error);
      });
     },
-    addProject(sec_index, proj_id, sectionID, e) {
+    addProject(sec_index, proj_id, sectionID, after, new_i, e) {
       axios({
         method: 'post',
         url: '/cf/sc/project/' + this.sections[sec_index].id,
         data: {
           id: proj_id,
+          after: after
         }
       }).then((response) => {
          var new_proj = response.data
@@ -271,15 +287,12 @@ createApp({
                }).then( (responsee) => {
                   new_proj.data
                   new_proj.data = responsee.data
-                  this.sections[sec_index].projects.push(new_proj)
-                  let proj_i = this.sections[sec_index].projects.length - 1
+                   this.sections[sec_index].projects.splice(new_i + 1, 0, new_proj);
+                  let proj_i = new_i + 1
                   this.sections[sec_index].projects[proj_i].restUpdater = setInterval(() => {
                       this.updateRests(sec_index, proj_i)
                      }, 1000)
-                  setTimeout(() => {
-                     var all_projects = document.getElementById(sectionID);
-                  all_projects.scrollTop += 500;
-               }, 100)
+                  
               })
               .catch(function (error) {
                 console.log(error);
@@ -365,6 +378,33 @@ createApp({
     openAdmin() {
          window.open('/cf/admin/#(confID)').focus()
     },
+    showAdd(sec_i, pr_id) {
+        if (pr_id == -1) {
+            this.sections[sec_i].h_timer = setTimeout(() => {
+                this.sections[sec_i].hover_add = true
+            }, 100)
+        }
+        else {
+            this.sections[sec_i].projects[pr_id].h_timer = setTimeout(() => {
+                this.sections[sec_i].projects[pr_id].hover_add = true
+            }, 100)
+        }
+    },
+    hideAdd(sec_i, pr_id) {
+        if (pr_id == -1) {
+            clearTimeout(this.sections[sec_i].h_timer)
+            this.sections[sec_i].h_timer = setTimeout(() => {
+                this.sections[sec_i].hover_add = false
+            }, 100)
+        }
+        else {
+            clearTimeout(this.sections[sec_i].projects[pr_id].h_timer)
+            this.sections[sec_i].projects[pr_id].h_timer = setTimeout(() => {
+                this.sections[sec_i].projects[pr_id].hover_add = false
+            }, 100)
+        }
+        
+    }
   }
 }).mount('#app')
 </script>

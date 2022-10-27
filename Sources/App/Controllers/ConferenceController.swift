@@ -32,6 +32,7 @@ struct ChangeName: Content {
 
 struct AddProject: Content {
     let id: Int
+    let after: Conference.IDValue?
 }
 
 struct ChangePresentation: Content {
@@ -316,19 +317,26 @@ struct ConferenceController: RouteCollection {
             throw Abort(.badRequest)
         }
         let proj_id = try req.content.decode(AddProject.self).id
+        let before_id = try req.content.decode(AddProject.self).after
+        
         return Section.find(sectionID, on: req.db).unwrap(or: Abort(.notFound)).flatMap { section in
-            return Project.query(on: req.db).filter(\.$section.$id == sectionID).filter(\.$nextProject.$id == nil).first().flatMap { lastProjectOpt in
+            if before_id == nil {
                 let newProj = Project(frgnID: proj_id, sectionID: sectionID)
+                newProj.$nextProject.id = section.$firstProject.id
                 return newProj.save(on: req.db).flatMapThrowing {
-                    if let last = lastProjectOpt {
-                        try last.$nextProject.id = newProj.requireID()
-                        return last.save(on: req.db).flatMapThrowing { Project.Public(project: newProj) }
-                    }
-                    try section.$firstProject.id = newProj.requireID()
-                    return section.save(on: req.db).flatMapThrowing { Project.Public(project: newProj) }
-                }
-            }.flatMap { $0 }
-            
+                    section.$firstProject.id = try newProj.requireID()
+                    return section.save(on: req.db).map { Project.Public(project: newProj) }
+                }.flatMap { $0 }
+                
+            }
+            return Project.find(before_id, on: req.db).unwrap(or: Abort(.notFound)).flatMap { project in
+                let newProj = Project(frgnID: proj_id, sectionID: sectionID)
+                newProj.$nextProject.id = project.$nextProject.id
+                return newProj.save(on: req.db).flatMapThrowing {
+                    project.$nextProject.id = try newProj.requireID()
+                    return project.save(on: req.db).map { Project.Public(project: newProj) }
+                }.flatMap { $0 }
+            }
             
         }
     }
