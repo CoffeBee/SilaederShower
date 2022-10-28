@@ -76,13 +76,13 @@
                   <span style="font-family: Raleway; font-weight: 500; font-size: 21px;border: none;
                outline: none; display: block;
                border-radius: 0; color: #464255;
-            margin-bottom: 0px;;width: auto; background: transparent" @blur="sendName(index, $event)" contenteditable>{{section.name}}</span>
+            margin-bottom: 0px;;width: auto; background: transparent" @blur="sendName(index, $event)" contenteditable>{{section.nameStr}}</span>
                   <img src="/images/add.svg" @click="sectionAdd"/>
                </div>
                     <span v-if="index != sections.length - 1" style="font-family: Raleway; font-weight: 500; font-size: 21px;border: none;
                outline: none; display: block;
                border-radius: 0; color:  #464255;
-            margin-bottom: 0px;;width: auto; background: transparent" @blur="sendName(index, $event)" contenteditable>{{section.name}}</span>
+            margin-bottom: 0px;;width: auto; background: transparent" @blur="sendName(index, $event)" contenteditable>{{section.nameStr}}</span>
             </div>
             <div @mouseover="showAdd(index, -1)"  @mouseleave="hideAdd(index, -1)"  style="min-height: 30px; min-width: 310px">
                 <div style="padding-top: 15px; padding-bottom: 15px;">
@@ -104,8 +104,7 @@
                             <div style="position: relative;">
                                <p class="comp" style="margin: 0; margin-left: -5px; display: inline-block; border-radius: 15px; padding: 8px 16px; background: rgba(255, 161, 38, 0.15);font-family: 'Raleway';font-style: normal;font-weight: 500;font-size: 16px;letter-spacing: 0.4px;color: #FFA126;">{{project.data.teacher}}</p>
                                 <p class="title" style="margin: 0; margin-top:  15px; font-family: 'Raleway'; font-weight: 500; font-size: 18px; color: #464255">{{project.data.name}}</p>
-                                <p class="time" v-if="project.status == 'none'" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE">est 10:00-10:05 </p>
-                                <p class="time" v-if="project.status == 'done'" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE"> {{project.timeStr}}</p>
+                                <p class="time" v-if="project.status != 'active'" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE"> {{project.timeStr}}</p>
                                 <p class="time" v-if="project.status == 'active' &&  project.rest > 0" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE">Осталось {{ project.restStr }}</p>
                                 <p class="time" v-if="project.status == 'active' &&  project.rest <= 0" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #FF5B5B">Время вышло</p>
 
@@ -157,7 +156,8 @@ createApp({
          start_hover: false,
          people_hover: false,
          hovered: null,
-         all_ids: []
+         all_ids: [],
+         max_time: 0
       }
    },
    mounted() {
@@ -173,6 +173,7 @@ createApp({
        this.sections.forEach( (section, sec_i) => {
         this.sections[sec_i].results = [];
         this.sections[sec_i].from_dir = [];
+        this.sections[sec_i].nameStr = this.sections[sec_i].name
          this.sections[sec_i].projects.forEach( (proj, proj_i) => {
 
             axios({
@@ -181,10 +182,17 @@ createApp({
                }).then( (response) => {
                 this.all_ids.push(this.sections[sec_i].projects[proj_i].frgnID);
                 this.sections[sec_i].projects[proj_i].data = response.data
-                if (this.sections[sec_i].projects[proj_i].status == "done") {
-                  let stop = this.sections[sec_i].projects[proj_i].stoppedAt 
+                let stop = this.sections[sec_i].projects[proj_i].stoppedAt 
                   let start = this.sections[sec_i].projects[proj_i].startedAt
+                if (this.sections[sec_i].projects[proj_i].status == "done") {
                   this.sections[sec_i].projects[proj_i].timeStr = this.prettyTime(start) + " - " + this.prettyTime(stop)
+                }
+                if (typeof stop !== "number") {
+                    if (typeof start === "number") {
+                        this.max_time = Math.max(this.max_time, start + response.data.time * 60)
+                    }
+                } else {
+                    this.max_time = Math.max(this.max_time, stop)
                 }
                 
                   this.sections[sec_i].projects[proj_i].restUpdater = setInterval(() => {
@@ -200,11 +208,34 @@ createApp({
      .catch(function (error) {
        console.log(error);
      });
+     setTimeout(this.calcTimeStr, 3000)
   },
    methods: {
     prettyTime(unix) {
       let date = new Date(unix * 1000)
       return ("0" + date.getHours()).substr(-2) + ":" + ("0" + date.getMinutes()).substr(-2)
+    },
+    calcTimeStr() {
+        let now = this.max_time
+       
+        this.sections.forEach( (section, sec_i) => {
+             let mx = 0
+            let mn = 100000000000
+            this.sections[sec_i].projects.forEach( (proj, proj_i) => {
+                if (this.sections[sec_i].projects[proj_i].status == "none") {
+                    let start = now
+                    let stop = now + 60 * this.sections[sec_i].projects[proj_i].data.time
+                    this.sections[sec_i].projects[proj_i].timeStr = "etc " + this.prettyTime(start) + " - " + this.prettyTime(stop)
+                    now = now + 60 * this.sections[sec_i].projects[proj_i].data.time
+                    mn = Math.min(start, mn)
+                    mx = Math.max(stop, mx)
+                } else if (this.sections[sec_i].projects[proj_i].status === "done") {
+                    mn = Math.min(this.sections[sec_i].projects[proj_i].startedAt, mn)
+                    mx = Math.max(this.sections[sec_i].projects[proj_i].stoppedAt, mx)
+                }
+            })
+            this.sections[sec_i].nameStr = this.sections[sec_i].name + ` ${this.prettyTime(mn) + " - " + this.prettyTime(mx)}`
+        })
     },
     sendTitle(e) {
       this.title = e.target.innerHTML;
@@ -315,6 +346,7 @@ createApp({
                   new_proj.data
                   new_proj.data = responsee.data
                    this.sections[sec_index].projects.splice(new_i + 1, 0, new_proj);
+                   this.calcTimeStr()
                   let proj_i = new_i + 1
                   this.sections[sec_index].projects[proj_i].restUpdater = setInterval(() => {
                       this.updateRests(sec_index, proj_i)
@@ -355,6 +387,7 @@ createApp({
                   new_proj.data
                   new_proj.data = responsee.data
                    this.sections[sec_index].projects.splice(new_i + 1, 0, new_proj);
+                   this.calcTimeStr()
                   let proj_i = new_i + 1
                   this.sections[sec_index].projects[proj_i].restUpdater = setInterval(() => {
                       this.updateRests(sec_index, proj_i)
@@ -405,6 +438,8 @@ createApp({
        }
       this.sections[sec_i].projects[pr_index].status = "active"
        this.sections[sec_i].projects[pr_index].startedAt = Date.now() / 1000
+       this.max_time = this.sections[sec_i].projects[pr_index].startedAt + this.sections[sec_i].projects[pr_index].data.time * 60
+       this.calcTimeStr()
 
      })
      .catch(function (error) {
@@ -437,6 +472,8 @@ createApp({
             let stop = this.sections[sec_i].projects[i].stoppedAt 
                   let start = this.sections[sec_i].projects[i].startedAt
                   this.sections[sec_i].projects[i].timeStr = this.prettyTime(start) + " - " + this.prettyTime(stop)
+            this.max_time = stop
+            this.calcTimeStr()
          }
        }
      })
