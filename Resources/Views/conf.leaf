@@ -239,7 +239,7 @@ createApp({
                     mx = Math.max(this.sections[sec_i].projects[proj_i].stoppedAt, mx)
                 }
             })
-            this.sections[sec_i].nameStr = this.sections[sec_i].name + ` ${this.prettyTime(mn) + " - " + this.prettyTime(mx)}`
+            this.sections[sec_i].nameStr = this.sections[sec_i].name + `\n${this.prettyTime(mn) + " - " + this.prettyTime(mx)}`
         })
     },
     sendTitle(e) {

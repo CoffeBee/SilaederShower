@@ -43,7 +43,7 @@
       var ctx = canvas.getContext('2d');
       var ctxx = canvass.getContext('2d');
       function fullscreen() {
-        var el = document.getElementById('the-canvas');
+        var el = document.getElementById('the-canvass');
         if (el.webkitRequestFullScreen) {
           el.webkitRequestFullScreen();
         } else {
