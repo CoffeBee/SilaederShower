@@ -65,6 +65,7 @@
          <div class="links" style="position: absolute; right: 30px;">
             <img @click="openAdmin" @mouseover="start_hover = true" @mouseleave="start_hover = false" :class="{bhover: start_hover == true}" src="/images/start.svg" style=" background: white; padding: 17.5px; border-radius: 18px; box-sizing: border-box; height: 70px; width: 70px;">
          <img @click="openShower" @mouseover="people_hover = true" @mouseleave="people_hover = false" :class="{bhover: people_hover == true}" src="/images/peoples.svg" style="margin-left: 25px; background: white; border-radius: 18px;  padding: 17.5px; box-sizing: border-box;  height: 70px; height: 70px">
+         <img @click="openTime" @mouseover="time_hover = true" @mouseleave="time_hover = false" :class="{bhover: time_hover == true}" src="/images/time.svg" style="margin-left: 25px; background: white; border-radius: 18px;  padding: 17.5px; box-sizing: border-box;  height: 70px; height: 70px">
          </div>
       </div>
 
@@ -155,6 +156,7 @@ createApp({
          sections: [],
          start_hover: false,
          people_hover: false,
+         time_hover: false,
          hovered: null,
          all_ids: [],
          max_time: 0
@@ -208,7 +210,10 @@ createApp({
      .catch(function (error) {
        console.log(error);
      });
-     setTimeout(this.calcTimeStr, 3000)
+     setInterval(() => {
+        this.max_time = Math.max(Date.now() / 1000, this.max_time);
+        this.calcTimeStr()
+    }, 1000)
   },
    methods: {
     prettyTime(unix) {
@@ -427,15 +432,18 @@ createApp({
         url: '/cf/sh/prs/' + this.confID,
         data: {newID: pr_id},
       }).then((response) => {
-       for (var i = 0; i < this.sections[sec_i].projects.length; i++) {
-         if (this.sections[sec_i].projects[i].status == "active") {
-            this.sections[sec_i].projects[i].status = "done"
-            this.sections[sec_i].projects[i].stoppedAt = Date.now() / 1000
-            let stop = this.sections[sec_i].projects[i].stoppedAt 
-                  let start = this.sections[sec_i].projects[i].startedAt
-                  this.sections[sec_i].projects[i].timeStr = this.prettyTime(start) + " - " + this.prettyTime(stop)
-         }
+       for (var j = 0; j < this.sections.length; j++) {
+        for (var i = 0; i < this.sections[j].projects.length; i++) {
+             if (this.sections[j].projects[i].status == "active") {
+                this.sections[j].projects[i].status = "done"
+                this.sections[j].projects[i].stoppedAt = Date.now() / 1000
+                let stop = this.sections[j].projects[i].stoppedAt 
+                      let start = this.sections[j].projects[i].startedAt
+                      this.sections[j].projects[i].timeStr = this.prettyTime(start) + " - " + this.prettyTime(stop)
+             }
+           }
        }
+
       this.sections[sec_i].projects[pr_index].status = "active"
        this.sections[sec_i].projects[pr_index].startedAt = Date.now() / 1000
        this.max_time = this.sections[sec_i].projects[pr_index].startedAt + this.sections[sec_i].projects[pr_index].data.time * 60
@@ -447,6 +455,7 @@ createApp({
      });
     },
     updateRests(sec_i, proj_i) {
+
      let rest = Date.now() / 1000 - this.sections[sec_i].projects[proj_i].startedAt;
                 rest = this.sections[sec_i].projects[proj_i].data.time * 60 - rest
       let restDate = new Date(rest * 1000)
@@ -483,6 +492,9 @@ createApp({
     },
     openShower() {
          window.open('/cf/view/#(confID)').focus()
+    },
+    openTime() {
+         window.open('/cf/time/#(confID)').focus()
     },
     openAdmin() {
          window.open('/cf/admin/#(confID)').focus()

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <link rel="stylesheet" href="/styles/home_css.css">
+       <meta name="viewport" content="user-scalable=0"/>
+      <script src="/home_scripts.js"></script>
+      <meta charset="UTF-8">
+      <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+      <script   src="https://code.jquery.com/jquery-3.6.1.min.js"   integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="   crossorigin="anonymous"></script>
+      <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://unpkg.com/vue-click@latest"></script>
+
+   </head>
+   <body>
+      
+   <div id="app" style="margin-left: 50px !important">
+      
+      <div class="header">
+         <span class="Info">
+            
+            <span class="h11" style="font-family: Raleway; font-weight: 600; font-size: 32px;border: none;
+               outline: none; display: block;
+               border-radius: 0;
+            margin-bottom: 0px; margin-top: 0px;width: auto; background: transparent" @blur="sendTitle" >{{title}}</span>
+            <a style="text-decoration: none; color: #58CDFF; font-family: 'Raleway'; font-size: 60px; font-weight: 700; margin-top: 40px" class="gue" href="/guest">Назад</a>
+            <span class="h22" style="font-family: Raleway; font-weight: 400; font-size: 14px;border: none;
+               outline: none; display: block; margin-top: 16px;
+               border-radius: 0;
+            margin-bottom: 0px;;width: auto; background: transparent" @blur="sendDetail">{{detail}}</span>
+         </span>
+      </div>
+
+      <div id="plan">
+         <div class="section" v-for="(section, index) in sections">
+            <div class="sec_he" style="margin-bottom: 0"> 
+               <div style="display: flex; justify-content: space-between;" v-if="index == sections.length - 1">
+                  <span style="font-family: Raleway; font-weight: 500; font-size: 21px;border: none;
+               outline: none; display: block;
+               border-radius: 0; color: #464255;
+            margin-bottom: 0px;;width: auto; background: transparent" @blur="sendName(index, $event)" >{{section.nameStr}}</span>
+               </div>
+                    <span v-if="index != sections.length - 1" style="font-family: Raleway; font-weight: 500; font-size: 21px;border: none;
+               outline: none; display: block;
+               border-radius: 0; color:  #464255;
+            margin-bottom: 0px;;width: auto; background: transparent" @blur="sendName(index, $event)" >{{section.nameStr}}</span>
+            </div>
+            <div style="min-height: 30px; min-width: 310px">
+                
+            </div>
+            <div class="projects" style="margin-bottom: 80px">
+               <div :id="section.id" style="position: relative;overflow-y: scroll;display: flex;
+   flex-direction: column;
+   margin-bottom: 20px;">
+                    <div v-for="(project, pr_id) in section.projects">
+                        <div  class="project" :class="{active: project.status == 'active', done: project.status == 'done'}">
+                            <div style="position: relative;">
+                               <p class="comp" style="margin: 0; margin-left: -5px; display: inline-block; border-radius: 15px; padding: 8px 16px; background: rgba(255, 161, 38, 0.15);font-family: 'Raleway';font-style: normal;font-weight: 500;font-size: 16px;letter-spacing: 0.4px;color: #FFA126;">{{project.data.teacher}}</p>
+                                <p class="title" style="margin: 0; margin-top:  15px; font-family: 'Raleway'; font-weight: 500; font-size: 18px; color: #464255">{{project.data.name}}</p>
+                                <p class="time" v-if="project.status != 'active'" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE"> {{project.timeStr}}</p>
+                                <p class="time" v-if="project.status == 'active' &&  project.rest > 0" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #D0D6DE">Осталось {{ project.restStr }}</p>
+                                <p class="time" v-if="project.status == 'active' &&  project.rest <= 0" style="margin:  0; margin-top:  3px;font-family: 'Raleway';font-style: normal;font-weight: 400;font-size: 14px;line-height: 26px;color: #FF5B5B">Время вышло</p>
+                            
+                            </div>
+                        </div>
+                        <div  style="min-height: 30px; min-width: 310px">
+                            
+                        </div>
+
+                    </div>
+
+               
+            </div>
+         </div>
+      </div>
+   </div>
+   <script>
+   openNav();
+   </script>
+</body>
+
+<script>
+
+const {createApp} = Vue
+createApp({
+   data() {
+      return {
+         title: '#(title)',
+         detail: '#(detail)',
+         confID: '#(confID)',
+         sections: [],
+         start_hover: false,
+         people_hover: false,
+         hovered: null,
+         all_ids: [],
+         max_time: 0
+      }
+   },
+   mounted() {
+      if (window.screen.width < 768) {
+         document.getElementById("slidebar").style.display = "none"
+         document.getElementById("app").style.marginLeft = "10px"
+      }
+      this.openSocket()
+    axios({
+        method: 'get',
+        url: '/cf/section/' + this.confID
+      }).then((response) => {
+       this.sections = response.data
+       this.sections.forEach( (section, sec_i) => {
+        this.sections[sec_i].results = [];
+        this.sections[sec_i].from_dir = [];
+        this.sections[sec_i].nameStr = this.sections[sec_i].name
+         this.sections[sec_i].projects.forEach( (proj, proj_i) => {
+
+            axios({
+                 method: 'get',
+                 url: 'http://api.conference.silaeder.ru/project/' + this.sections[sec_i].projects[proj_i].frgnID,
+               }).then( (response) => {
+                this.all_ids.push(this.sections[sec_i].projects[proj_i].frgnID);
+                this.sections[sec_i].projects[proj_i].data = response.data
+                let stop = this.sections[sec_i].projects[proj_i].stoppedAt 
+                  let start = this.sections[sec_i].projects[proj_i].startedAt
+                if (this.sections[sec_i].projects[proj_i].status == "done") {
+                  this.sections[sec_i].projects[proj_i].timeStr = this.prettyTime(start) + " - " + this.prettyTime(stop)
+                }
+                if (typeof stop !== "number") {
+                    if (typeof start === "number") {
+                        this.max_time = Math.max(this.max_time, start + response.data.time * 60)
+                    }
+                } else {
+                    this.max_time = Math.max(this.max_time, stop)
+                }
+                
+                  this.sections[sec_i].projects[proj_i].restUpdater = setInterval(() => {
+                      this.updateRests(sec_i, proj_i)
+                     }, 1000)
+              })
+              .catch(function (error) {
+                console.log(error);
+              });
+         } )
+      });
+     })
+     .catch(function (error) {
+       console.log(error);
+     });
+     setInterval(() => {
+        this.max_time = Math.max(Date.now() / 1000, this.max_time);
+        this.calcTimeStr()
+    }, 1000)
+  },
+   methods: {
+    prettyTime(unix) {
+      let date = new Date(unix * 1000)
+      return ("0" + date.getHours()).substr(-2) + ":" + ("0" + date.getMinutes()).substr(-2)
+    },
+    openSocket() {
+        var socket = new WebSocket(`ws://${(window.location.host + window.location.pathname).replace('time', 'ws')}`);
+        socket.onopen = function() {};
+        socket.onmessage = function(event) {
+          const msg = JSON.parse(event.data);
+          if (msg.type == "presentation") {
+            location.reload()
+          }
+        };
+        socket.onclose = () => {
+          setTimeout(this.openSocket, 1000);
+        }
+    },
+      
+    calcTimeStr() {
+        let now = this.max_time
+       
+        this.sections.forEach( (section, sec_i) => {
+             let mx = 0
+            let mn = 100000000000
+            this.sections[sec_i].projects.forEach( (proj, proj_i) => {
+                if (this.sections[sec_i].projects[proj_i].status == "none") {
+                    let start = now
+                    let stop = now + 60 * this.sections[sec_i].projects[proj_i].data.time
+                    this.sections[sec_i].projects[proj_i].timeStr = "etc " + this.prettyTime(start) + " - " + this.prettyTime(stop)
+                    now = now + 60 * this.sections[sec_i].projects[proj_i].data.time
+                    mn = Math.min(start, mn)
+                    mx = Math.max(stop, mx)
+                } else if (this.sections[sec_i].projects[proj_i].status === "done") {
+                    mn = Math.min(this.sections[sec_i].projects[proj_i].startedAt, mn)
+                    mx = Math.max(this.sections[sec_i].projects[proj_i].stoppedAt, mx)
+                }
+            })
+            this.sections[sec_i].nameStr = this.sections[sec_i].name + ` ${this.prettyTime(mn) + " - " + this.prettyTime(mx)}`
+        })
+    },
+    updateRests(sec_i, proj_i) {
+     let rest = Date.now() / 1000 - this.sections[sec_i].projects[proj_i].startedAt;
+                rest = this.sections[sec_i].projects[proj_i].data.time * 60 - rest
+      let restDate = new Date(rest * 1000)
+                var minutes = "0" + restDate.getMinutes();
+                var seconds = "0" + restDate.getSeconds();
+      this.sections[sec_i].projects[proj_i].restStr = minutes.substr(-2) + ':' + seconds.substr(-2);
+      this.sections[sec_i].projects[proj_i].rest = rest
+
+         
+    }
+  }
+}).mount('#app')
+</script>
+</html>

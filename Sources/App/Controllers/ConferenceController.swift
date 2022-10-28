@@ -79,7 +79,7 @@ struct ConferenceController: RouteCollection {
         conferencesRoute.post("title", ":id", use: titleChange)
         conferencesRoute.post("detail", ":id", use: detailChange)
         conferencesRoute.post("section", ":id", use: sectionAdd)
-        conferencesRoute.get("section", ":id", use: sections)
+        routes.get("cf","section", ":id", use: sections)
         routes.get("cf", "view", ":id", use: showerConf)
         conferencesRoute.get("admin", ":id", use: adminConf)
         routes.webSocket("cf", "ws", ":id", onUpgrade: wsConf)
@@ -96,6 +96,8 @@ struct ConferenceController: RouteCollection {
         showerRoute.post("stop", ":id", use: stopPresentation)
         showerRoute.post("slide", ":id", use: changeSlide)
         
+        
+        routes.get("cf", "time", ":id", use: timeTable)
         
     }
     
@@ -180,6 +182,20 @@ struct ConferenceController: RouteCollection {
             return self.getConfs(req: req, selected: confID).flatMap { confs in
                 return Section.query(on: req.db).filter(\.$conference.$id == confID).all().flatMapThrowing { sections in
                     req.view.render("conf", ConfInformation(confs: confs, title: conf.title, detail: conf.detail, confID: confID))
+                }.flatMap { $0 }
+            }
+        }
+    }
+    
+    fileprivate func timeTable(req: Request) throws -> EventLoopFuture<View> {
+        let confStr = req.parameters.get("id")!
+        guard let confID = UUID(uuidString: confStr) else {
+            throw Abort.redirect(to: "/cf")
+        }
+        return Conference.find(confID, on: req.db).unwrap(or: Abort.redirect(to: "/cf")).flatMap { conf in
+            return self.getConfs(req: req, selected: confID).flatMap { confs in
+                return Section.query(on: req.db).filter(\.$conference.$id == confID).all().flatMapThrowing { sections in
+                    req.view.render("time", ConfInformation(confs: confs, title: conf.title, detail: conf.detail, confID: confID))
                 }.flatMap { $0 }
             }
         }
@@ -279,9 +295,6 @@ struct ConferenceController: RouteCollection {
     }
     
     fileprivate func sections(req: Request) throws -> EventLoopFuture<[Section.Public]> {
-        guard let _ = req.auth.get(User.self) else {
-            throw Abort.redirect(to: "/login")
-        }
         let confStr = req.parameters.get("id")!
         guard let confID = UUID(uuidString: confStr) else {
             throw Abort(.badRequest)
