@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html>
    <head>
-      <link rel="stylesheet" href="/styles/home_css.css">
+      <link rel="stylesheet" href="/styles/time_css.css">
        <meta name="viewport" content="user-scalable=0"/>
-      <script src="/home_scripts.js"></script>
       <meta charset="UTF-8">
       <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
       <script   src="https://code.jquery.com/jquery-3.6.1.min.js"   integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="   crossorigin="anonymous"></script>
@@ -22,7 +21,7 @@
                outline: none; display: block;
                border-radius: 0;
             margin-bottom: 0px; margin-top: 0px;width: auto; background: transparent" @blur="sendTitle" >{{title}}</span>
-            <a style="text-decoration: none; color: #58CDFF; font-family: 'Raleway'; font-size: 60px; font-weight: 700; margin-top: 40px" class="gue" href="/guest">Назад</a>
+            
             <span class="h22" style="font-family: Raleway; font-weight: 400; font-size: 14px;border: none;
                outline: none; display: block; margin-top: 16px;
                border-radius: 0;
@@ -96,10 +95,7 @@ createApp({
       }
    },
    mounted() {
-      if (window.screen.width < 768) {
-         document.getElementById("slidebar").style.display = "none"
-         document.getElementById("app").style.marginLeft = "10px"
-      }
+      
       this.openSocket()
     axios({
         method: 'get',
